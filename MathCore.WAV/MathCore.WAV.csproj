@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>8</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>0.0.0</Version>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Authors>Shmachilin P.A.</Authors>
+    <Description>Библиотека для работы с WAV-файлами</Description>
+    <PackageReleaseNotes>Замена массивов на Span в сигнатуре метода Process нейронной сети</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/Infarh/MathCore.WAV</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Infarh/MathCore.WAV</RepositoryUrl>
+    <Copyright>shmachilin@gmail.com</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="MathCore" Version="0.0.20.2" />-->
+    <PackageReference Include="System.Memory" Version="4.5.3" />
+    <PackageReference Include="System.Runtime" Version="4.3.1" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+  </ItemGroup>
+
+</Project>
