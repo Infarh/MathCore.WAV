@@ -3,6 +3,10 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using MathCore.WAV.Service;
+// ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
+// ReSharper disable UnusedMember.Global
+// ReSharper disable ConvertToAutoPropertyWhenPossible
+// ReSharper disable ConvertToAutoProperty
 
 namespace MathCore.WAV
 {
