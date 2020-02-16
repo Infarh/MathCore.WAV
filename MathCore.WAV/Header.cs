@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using MathCore.WAV.Service;
+
 // ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ConvertToAutoPropertyWhenPossible
@@ -109,97 +109,173 @@ namespace MathCore.WAV
 
         public int FrameCount => _SubChunk2Size / _BlockAlign;
 
-        ///// <summary>Инициализация нового заголовка WAV-файла</summary>
-        ///// <param name="ChunkSize">Размер файла - 8 байт</param>
-        ///// <param name="SubChunk1Size">Оставшийся размер цепочки (для PCM = 16)</param>
-        ///// <param name="AudioFormat">Формат (по умолчанию PCM = 1)</param>
-        ///// <param name="NumChannels">Количество каналов</param>
-        ///// <param name="SampleRate">Частота дискретизации</param>
-        ///// <param name="ByteRate">Скорость передачи (байт/с)</param>
-        ///// <param name="BlockAlign">Количество байт на один фрейм (один отсчёт по всем кналам)</param>
-        ///// <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
-        ///// <param name="SubChunk2Size">Количество байт области данных</param>
-        //public Header
-        //(
-        //    int ChunkSize,
-        //    int SubChunk1Size,
-        //    Format AudioFormat,
-        //    short NumChannels,
-        //    int SampleRate,
-        //    int ByteRate,
-        //    short BlockAlign,
-        //    short BitsPerSample,
-        //    int SubChunk2Size
-        //)
-        //{
-        //    _ChunkID = Encoding.UTF8.GetBytes("RIFF");
-        //    _ChunkSize = ChunkSize;
-        //    _Format = Encoding.UTF8.GetBytes("WAVE");
-        //    _SubChunk1Id = Encoding.UTF8.GetBytes("fmt\0x20");
-        //    _SubChunk1Size = SubChunk1Size;
-        //    _AudioFormat = AudioFormat;
-        //    _NumChannels = NumChannels;
-        //    _SampleRate = SampleRate;
-        //    _ByteRate = ByteRate;
-        //    _BlockAlign = BlockAlign;
-        //    _BitsPerSample = BitsPerSample;
-        //    _SubChunk2Size = SubChunk2Size;
-        //    _SubChunk2Id = Encoding.UTF8.GetBytes("data");
-        //}
+        /// <summary>Инициализация нового заголовка WAV-файла</summary>
+        /// <param name="ChunkSize">Размер файла - 8 байт</param>
+        /// <param name="SubChunk1Size">Оставшийся размер цепочки (для PCM = 16)</param>
+        /// <param name="AudioFormat">Формат (по умолчанию PCM = 1)</param>
+        /// <param name="ChannelsCount">Количество каналов</param>
+        /// <param name="SampleRate">Частота дискретизации</param>
+        /// <param name="ByteRate">Скорость передачи (байт/с) = <paramref name="SampleRate"/> * <paramref name="BlockAlign"/></param>
+        /// <param name="BlockAlign">Количество байт на один фрейм (один отсчёт по всем каналам)</param>
+        /// <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
+        /// <param name="SubChunk2Size">Количество байт области данных</param>
+        public Header(
+            int ChunkSize,
+            int SubChunk1Size,
+            Format AudioFormat,
+            short ChannelsCount,
+            int SampleRate,
+            int ByteRate,
+            short BlockAlign,
+            short BitsPerSample,
+            int SubChunk2Size
+        )
+        {
+            _ChunkID = Encoding.UTF8.GetBytes("RIFF");
+            _ChunkSize = ChunkSize;
+            _Format = Encoding.UTF8.GetBytes("WAVE");
+            _SubChunk1Id = Encoding.UTF8.GetBytes("fmt\0x20");
+            _SubChunk1Size = AudioFormat == WAV.Format.PCM ? 16 : SubChunk1Size;
+            _AudioFormat = AudioFormat;
+            _ChannelsCount = ChannelsCount;
+            _SampleRate = SampleRate;
+            _ByteRate = ByteRate;
+            _BlockAlign = BlockAlign;
+            _BitsPerSample = BitsPerSample;
+            _SubChunk2Size = SubChunk2Size;
+            _SubChunk2Id = Encoding.UTF8.GetBytes("data");
+        }
+
+        /// <summary>Инициализация нового заголовка WAV-файла в PCM-формате</summary>
+        /// <param name="FileLength">Длина файла</param>
+        /// <param name="ChannelsCount">Количество каналов</param>
+        /// <param name="SampleRate">Частота дискретизации</param>
+        /// <param name="BlockAlign">Количество байт на один фрейм (один отсчёт по всем каналам)</param>
+        /// <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
+        /// <param name="DataLength">Количество байт области данных</param>
+        public Header(
+            int FileLength,
+            short ChannelsCount,
+            int SampleRate,
+            short BlockAlign,
+            short BitsPerSample,
+            int DataLength
+        )
+        {
+            _ChunkID = Encoding.UTF8.GetBytes("RIFF");
+            _ChunkSize = FileLength - 8;
+            _Format = Encoding.UTF8.GetBytes("WAVE");
+            _SubChunk1Id = Encoding.UTF8.GetBytes("fmt ");
+            _SubChunk1Size = 16;
+            _AudioFormat = WAV.Format.PCM;
+            _ChannelsCount = ChannelsCount;
+            _SampleRate = SampleRate;
+            _ByteRate = SampleRate * BlockAlign;
+            _BlockAlign = BlockAlign;
+            _BitsPerSample = BitsPerSample;
+            _SubChunk2Size = DataLength;
+            _SubChunk2Id = Encoding.UTF8.GetBytes("data");
+        }
 
         public Header(Stream stream) : this(new BinaryReader(stream ?? throw new ArgumentNullException(nameof(stream)))) { }
 
         public Header(BinaryReader reader)
         {
-            if(reader is null) 
+            if (reader is null)
                 throw new ArgumentNullException(nameof(reader));
 
             var file_length = (reader.BaseStream as FileStream)?.Length ?? -1;
-            if (file_length == 0) 
+            if (file_length == 0)
                 throw new ArgumentException("Попытка чтения пустого файла");
-            if (file_length != -1 && file_length < 44) 
-                throw new FormatException("Размер файла недостаточен для хранения даже заголовка");
+            //if (file_length != -1 && file_length < 44)
+            //    throw new FormatException("Размер файла недостаточен для хранения даже заголовка");
 
             #region Последовательная загрузка
 
+            //Чтерие текстовой метки "RIFF" (кодировка UTF-8)
             _ChunkID = reader.ReadBytes(4); // RIFF 0..3 (4)
             if (Encoding.UTF8.GetString(_ChunkID) != "RIFF")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура RIFF в начале потока данных");
 
+            // Чтение размера файла без заголовка - должно быть равно длине файла минус 8 байт
             _ChunkSize = reader.ReadInt32(); // 4..7 (4) = file_length - 8
-            if (file_length != -1 && _ChunkSize != file_length - 8)
-                throw new FormatException("Размер файла в заголовке определён неверно");
+            //if (file_length != -1 && _ChunkSize != file_length - 8)
+            //    throw new FormatException("Размер файла в заголовке определён неверно");
 
+            // Чтение текстовой метки "WAVE" (кодировка UTF-8)
             _Format = reader.ReadBytes(4); // WAVE 8..11 (4)
             if (Encoding.UTF8.GetString(_Format) != "WAVE")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура WAVE в заголовке");
 
+            // Чтение текстовой метки "fmt " (кодировка UTF-8)
             _SubChunk1Id = reader.ReadBytes(4); // fmt\0x20 12..15 (4)
             if (Encoding.UTF8.GetString(_SubChunk1Id) != "fmt ")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура \"fmt \" в заголовке");
 
+            // Чтение оставшейся длины заголовка - для PCM-формата файла должно быть равно 16 байтам
             _SubChunk1Size = reader.ReadInt32(); // 16..19 (4) = 16
             _AudioFormat = (Format)reader.ReadInt16(); // 20..21 (2)
-            if (_AudioFormat == WAV.Format.PCM && _SubChunk1Size != 16)
-                throw new FormatException("Размер оставшейся части заголовка PCM формата не равен 16");
+            //if (_AudioFormat == WAV.Format.PCM && _SubChunk1Size != 16)
+            //    throw new FormatException("Размер оставшейся части заголовка PCM формата не равен 16");
 
+            // Чтение числа каналов
             _ChannelsCount = reader.ReadInt16(); // 22..23 (2)
-            if (_ChannelsCount <= 0) 
+            if (_ChannelsCount <= 0)
                 throw new FormatException("Ошибка формата заголовка: количество каналов не может быть меньше, либо равно 0");
 
+            // Чтение частоты дискретизации в Гц
             _SampleRate = reader.ReadInt32(); // 24..27 (4)
+
+            // Чтение скорости передачи в Байт/с
             _ByteRate = reader.ReadInt32(); // 28..31 (4)
+
+            // Чтение длины кадра - число байт на все каналы на одно значение в один момент времени
             _BlockAlign = reader.ReadInt16(); // 32..33 (2)
+            if (_ByteRate / _BlockAlign != _SampleRate)
+                throw new FormatException("Ошибка формата файла: скорость потока (Байт/с) делёная на размер фрейма не равна частоте дискретизации");
+
+            // Чтение числа бит, приходящегося на один канал
             _BitsPerSample = reader.ReadInt16(); // 34..35 (2)
+            if (_ChannelsCount * _BitsPerSample / 8 != _BlockAlign)
+                throw new FormatException($"Произведение числа байт на канал ({_BitsPerSample / 8}) "
+                                          + $"и числа каналов ({_ChannelsCount}) "
+                                          + $"не равно размеру фрейма ({_BlockAlign})");
+
+            // Чтение текстовой метки "data" (кодировка UTF-8)
             _SubChunk2Id = reader.ReadBytes(4); // 36..39 (4)
             if (Encoding.UTF8.GetString(_SubChunk2Id) != "data")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура WAVE в заголовке");
 
+            // Чтение оставшейся после заголовка длины файла. Должно быть равно длине файла - 44 байта для формата PCM
             _SubChunk2Size = reader.ReadInt32(); // 40..43 (4) = file_length - 44
-            if (file_length != -1 && _SubChunk2Size != file_length - Length)
-                throw new FormatException("Ошибка формата заголовка: неверно указан размер области данных файла");
+            if (file_length != -1 && _AudioFormat == WAV.Format.PCM && _SubChunk2Size != file_length - Length)
+                throw new FormatException("Ошибка формата заголовка: неверно указан размер области данных файла "
+                                          + $"- длина файла {file_length}, длина заголовка {Length} байта, "
+                                          + $"оставшаяся длина {file_length} - {Length} = {file_length - Length}, "
+                                          + $"а указано {_SubChunk2Size}");
 
             #endregion
+        }
+
+        public void WriteTo(BinaryWriter writer)
+        {
+            writer.Write(_ChunkID);
+            writer.Write(_ChunkSize);
+            writer.Write(_Format);
+
+            writer.Write(_SubChunk1Id);
+            writer.Write(_SubChunk1Size);
+
+            writer.Write((short)_AudioFormat);
+
+            writer.Write(_ChannelsCount);
+            writer.Write(_SampleRate);
+            writer.Write(_ByteRate);
+            writer.Write(_BlockAlign);
+            writer.Write(_BitsPerSample);
+
+            writer.Write(_SubChunk2Id);
+            writer.Write(_SubChunk2Size);
         }
     }
 }

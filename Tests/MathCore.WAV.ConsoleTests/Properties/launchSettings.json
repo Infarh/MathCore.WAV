@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MathCore.WAV.ConsoleTests": {
+      "commandName": "Project",
+      "commandLineArgs": "3000"
+    }
+  }
+}

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿
 // ReSharper disable UnusedMember.Global
 
 namespace MathCore.WAV

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace MathCore.WAV.Service
@@ -32,6 +33,12 @@ namespace MathCore.WAV.Service
             {
                 handle.Free();
             }
+        }
+
+        public static TValue Using<T, TValue>(this T obj, Func<T, TValue> Selector)
+            where T : IDisposable
+        {
+            using (obj) return Selector(obj);
         }
     }
 }
