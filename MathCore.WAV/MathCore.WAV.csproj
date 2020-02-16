@@ -7,13 +7,13 @@
 
   <PropertyGroup>
     <Version>0.0.0</Version>
+    <PackageReleaseNotes>Публикация пакета</PackageReleaseNotes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Authors>Shmachilin P.A.</Authors>
     <Description>Библиотека для работы с WAV-файлами</Description>
-    <PackageReleaseNotes>Initial</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/Infarh/MathCore.WAV</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Infarh/MathCore.WAV</RepositoryUrl>
     <Copyright>shmachilin@gmail.com</Copyright>
