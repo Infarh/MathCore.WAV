@@ -7,24 +7,32 @@
 
   <PropertyGroup>
     <Version>0.0.0</Version>
+    <PackageReleaseNotes>Публикация пакета</PackageReleaseNotes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Authors>Shmachilin P.A.</Authors>
     <Description>Библиотека для работы с WAV-файлами</Description>
-    <PackageReleaseNotes>Замена массивов на Span в сигнатуре метода Process нейронной сети</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/Infarh/MathCore.WAV</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Infarh/MathCore.WAV</RepositoryUrl>
     <Copyright>shmachilin@gmail.com</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>MathCore.WAV.snk</AssemblyOriginatorKeyFile>
+    <PackageTags>WAV</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile></DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>MathCore.WAV.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="MathCore" Version="0.0.20.2" />-->
-    <PackageReference Include="System.Memory" Version="4.5.3" />
-    <PackageReference Include="System.Runtime" Version="4.3.1" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+    <PackageReference Include="System.Interactive.Async" Version="4.0.0" />
   </ItemGroup>
 
 </Project>

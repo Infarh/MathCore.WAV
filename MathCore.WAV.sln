@@ -5,6 +5,12 @@ VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathCore.WAV", "MathCore.WAV\MathCore.WAV.csproj", "{DD9CEAB3-1970-4DB6-A7B2-66919D649287}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{094D7C2B-3BA1-475F-BD56-CDC73666EFA3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathCore.WAV.Tests", "Tests\MathCore.WAV.Tests\MathCore.WAV.Tests.csproj", "{DBDB40EB-55C2-46A4-8441-D8EF9FCA478A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MathCore.WAV.ConsoleTests", "Tests\MathCore.WAV.ConsoleTests\MathCore.WAV.ConsoleTests.csproj", "{922D3863-2452-4D59-94C3-E366E274C215}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,9 +21,21 @@ Global
 		{DD9CEAB3-1970-4DB6-A7B2-66919D649287}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD9CEAB3-1970-4DB6-A7B2-66919D649287}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DD9CEAB3-1970-4DB6-A7B2-66919D649287}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBDB40EB-55C2-46A4-8441-D8EF9FCA478A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBDB40EB-55C2-46A4-8441-D8EF9FCA478A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBDB40EB-55C2-46A4-8441-D8EF9FCA478A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBDB40EB-55C2-46A4-8441-D8EF9FCA478A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{922D3863-2452-4D59-94C3-E366E274C215}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{922D3863-2452-4D59-94C3-E366E274C215}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{922D3863-2452-4D59-94C3-E366E274C215}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{922D3863-2452-4D59-94C3-E366E274C215}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DBDB40EB-55C2-46A4-8441-D8EF9FCA478A} = {094D7C2B-3BA1-475F-BD56-CDC73666EFA3}
+		{922D3863-2452-4D59-94C3-E366E274C215} = {094D7C2B-3BA1-475F-BD56-CDC73666EFA3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8A954307-464C-4C0C-A450-AF5C8FA4C3D6}
