@@ -1,0 +1,543 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MathCore.WAV</name>
+    </assembly>
+    <members>
+        <member name="F:MathCore.WAV.Format.Unknown">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.PCM">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.AdPCM">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.IEEEFloat">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Vselp">
+            <sumary>Compaq Computer Corp.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.IbmCvsd">
+            <sumary>IBM Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Alaw">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Mulaw">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DTS">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DRM">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.OkiAdPCM">
+            <sumary>OKI</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DviAdPCM">
+            <sumary>Intel Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.ImaAdPCM">
+            <summary>Intel Corporation</summary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MediaSpaceAdPCM">
+            <sumary>Video logic</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SierraAdPCM">
+            <sumary>Sierra Semiconductor Corp</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.G723AdPCM">
+            <sumary>Antex Electronics Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DigiSTD">
+            <sumary>DSP Solutions, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Digifix">
+            <sumary>DSP Solutions, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DialogicOkiAdPCM">
+            <sumary>Dialogic Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MediaVisionAdPCM">
+            <sumary>Media Vision, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.CuCodec">
+            <sumary>Hewlett-Packard Company</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.YamahaAdPCM">
+            <sumary>Yamaha Corporation of America</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Sonarc">
+            <sumary>Speech Compression</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DSPgroupTrueSpeech">
+            <sumary>DSP Group, Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.EchoSC1">
+            <sumary>Echo Speech Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.AudioFileAF36">
+            <sumary>Virtual Music, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Aptx">
+            <sumary>Audio Processing Technology</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.AudioFileAF10">
+            <sumary>Virtual Music, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Prosody1612">
+            <sumary>Aculab plc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.LRC">
+            <sumary>Merging Technologies S.A.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DolbyAC2">
+            <sumary>Dolby Laboratories</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.GSM610">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MSNAudio">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.AntexAdPCMe">
+            <sumary>Antex Electronics Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.ControlResVqLPC">
+            <sumary>Control Resources Limited</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DigiReal">
+            <sumary>DSP Solutions, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DigiAdPCM">
+            <sumary>DSP Solutions, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.ControlResCR10">
+            <sumary>Control Resources Limited</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.NmsVbxAdPCM">
+            <sumary>Natural MicroSystems</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.CsImaAdPCM">
+            <sumary>Crystal Semiconductor IMA ADPCM</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.EchoSC3">
+            <summary>Echo Speech Corporation</summary>
+        </member>
+        <member name="F:MathCore.WAV.Format.RockwellAdPCM">
+            <summary>Rockwell International</summary>
+        </member>
+        <member name="F:MathCore.WAV.Format.RockwellDigitalK">
+            <summary>Rockwell International</summary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Xebec">
+            <summary>Xebec Multimedia Solutions Limited</summary>
+        </member>
+        <member name="F:MathCore.WAV.Format.G721AdPCM">
+            <sumary>Antex Electronics Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.G728Celp">
+            <sumary>Antex Electronics Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MSG723">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MPEG">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.RT24">
+            <sumary>InSoft, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.PAC">
+            <sumary>InSoft, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MpegLayer3">
+            <sumary>ISO/MPEG Layer3 Format Tag</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.LucentG723">
+            <sumary>Lucent Technologies</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Cirrus">
+            <sumary>Cirrus Logic</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.EsPCM">
+            <sumary>ESS Technology</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWare">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.CanopusAtrac">
+            <sumary>Canopus, co., Ltd.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.G726AdPCM">
+            <sumary>APICOM</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.G722AdPCM">
+            <sumary>APICOM</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DsatDisplay">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareByteAligned">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareAC8">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareAC10">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareAC16">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareAC20">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareRT24">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareRT29">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareRT29HW">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareVR12">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareVR18">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareTQ40">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SoftSound">
+            <sumary>Softsound, Ltd.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VOXWareTQ60">
+            <sumary>VOXWare Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Msrt24">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.G729A">
+            <sumary>AT&amp;T Labs, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MviMvi2">
+            <sumary>Motion Pixels</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DfG726">
+            <sumary>DataFusion Systems (Pty) (Ltd)</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DfGSM610">
+            <sumary>DataFusion Systems (Pty) (Ltd)</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.IsiAudio">
+            <sumary>Iterated Systems, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.OnLive">
+            <sumary>OnLive! Technologies, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Sbc24">
+            <sumary>Siemens Business Communications Sys</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DolbyAC3Spdif">
+            <sumary>Sonic Foundry</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MediaSonicG723">
+            <sumary>MediaSonic</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Prosody_8Kbps">
+            <sumary>Aculab plc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.ZyxelAdPCM">
+            <sumary>ZyXEL Communications, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.PhilipsLpcbb">
+            <sumary>Philips Speech Processing</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Packed">
+            <sumary>Studer Professional Audio AG</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.MaldenPhonyTalk">
+            <summary>Malden Electronics Ltd.</summary>
+        </member>
+        <member name="F:MathCore.WAV.Format.RhetorexAdPCM">
+            <sumary>Rhetorex Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Irat">
+            <sumary>BeCubed Software Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VivoG723">
+            <sumary>Vivo Software</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VivoSiren">
+            <sumary>Vivo Software</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DigitalG723">
+            <sumary>Digital Equipment Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SanyoLdAdPCM">
+            <sumary>Sanyo Electric Co., Ltd.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SiprolabAceplnet">
+            <sumary>Sipro Lab Telecom Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SiprolabAcelp4800">
+            <sumary>Sipro Lab Telecom Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SiprolabAcelp8V3">
+            <sumary>Sipro Lab Telecom Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SiprolabG729">
+            <sumary>Sipro Lab Telecom Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SiprolabG729A">
+            <sumary>Sipro Lab Telecom Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SiprolabKelvin">
+            <sumary>Sipro Lab Telecom Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.G726ADPCM">
+            <sumary>Dictaphone Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.QualcommPurevoice">
+            <sumary>Qualcomm, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.QualcommHalfRate">
+            <sumary>Qualcomm, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.TubGSM">
+            <sumary>Ring Zero Systems, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Msaudio1">
+            <sumary>Microsoft Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.UnisysNapAdPCM">
+            <sumary>Unisys Corp.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.UnisysNapUlaw">
+            <sumary>Unisys Corp.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.UnisysNapAlaw">
+            <sumary>Unisys Corp.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.UnisysNap16K">
+            <sumary>Unisys Corp.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.CreativeAdPCM">
+            <sumary>Creative Labs, Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.CreativeFastspeech8">
+            <sumary>Creative Labs, Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.CreativeFastspeech10">
+            <sumary>Creative Labs, Inc</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.UherAdPCM">
+            <sumary>UHER informatic GmbH</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Quarterdeck">
+            <sumary>Quarterdeck Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.IlinkVc">
+            <sumary>I-link Worldwide</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.RawSport">
+            <sumary>Aureal Semiconductor</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.EsstAc3">
+            <sumary>ESS Technology, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.IpiHsx">
+            <sumary>Interactive Products, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.IpiRpelp">
+            <sumary>Interactive Products, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Cs2">
+            <sumary>Consistent Software</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SonyScx">
+            <sumary>Sony Corp.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.FmTownsSnd">
+            <sumary>Fujitsu Corp.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.BtvDigital">
+            <sumary>Brooktree Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.QdesignMusic">
+            <sumary>QDesign Corporation</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.VmeVmpcm">
+            <sumary>AT&amp;T Labs, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.TMC">
+            <sumary>AT&amp;T Labs, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.OliGSM">
+            <sumary>Ing C. Olivetti &amp; C., S.p.A.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.OliAdPCM">
+            <sumary>Ing C. Olivetti &amp; C., S.p.A.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.OliCelp">
+            <sumary>Ing C. Olivetti &amp; C., S.p.A.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.OliSBC">
+            <sumary>Ing C. Olivetti &amp; C., S.p.A.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.OliOPR">
+            <sumary>Ing C. Olivetti &amp; C., S.p.A.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.LhCodec">
+            <sumary>Lernout &amp; Hauspie</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.Norris">
+            <sumary>Norris Communications, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.SoundSpaceMusiCompress">
+            <sumary>AT&amp;T Labs, Inc.</sumary>
+        </member>
+        <member name="F:MathCore.WAV.Format.DVM">
+            <sumary>FAST Multimedia AG</sumary>
+        </member>
+        <member name="M:MathCore.WAV.Frame.ToString">
+            <inheritdoc />
+        </member>
+        <member name="F:MathCore.WAV.Header.Length">
+            <summary>Длина заголовка</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._ChunkID">
+            <summary>Идентификатор заголовка файла. Должен содержать символы "RIFF"</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._ChunkSize">
+            <summary>Оставшийся размер файла начиная с этой позиции. Должен быть равен размеру файла - 8 байт</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._Format">
+            <summary>Строка, содержащая символы "WAVE"</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._SubChunk1Id">
+            <summary>Строка, содержащая "fmt "</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._SubChunk1Size">
+            <summary>Оставшийся размер подцепочки (должен быть равен 16)</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._AudioFormat">
+            <summary>Формат файла</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._ChannelsCount">
+            <summary>Количество каналов</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._SampleRate">
+            <summary>Частота дискретизации Гц</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._ByteRate">
+            <summary>Скорость передачи Байт/с</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._BlockAlign">
+            <summary>Размер фрейма в байтах включая все каналы</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._BitsPerSample">
+            <summary>Бит на канал (8,16,...)</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._SubChunk2Id">
+            <summary>Содержит символы "data"</summary>
+        </member>
+        <member name="F:MathCore.WAV.Header._SubChunk2Size">
+            <summary>Количество байт области данных</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.ChunkID">
+            <summary>Должен содержать строку "RIFF"</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.Format">
+            <summary>Должен содержать строку "WAVE"</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.SubChunk1Id">
+            <summary>Должен содержать строку "fmt\0x20"</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.SubChunk2Id">
+            <summary>Должен содержать строку "data"</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.ChunkSize">
+            <summary>Размер файла - 8 байт</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.SubChunk1Size">
+            <summary>Оставшийся размер цепочки (для PCM = 16)</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.AudioFormat">
+            <summary>Формат (по умолчанию PCM = 1)</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.ChannelsCount">
+            <summary>Количество каналов</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.SampleRate">
+            <summary>Частота дискретизации</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.BlockAlign">
+            <summary>Количество байт на один фрейм (один отсчёт по всем кналам)</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.BitsPerSample">
+            <summary>Количество бит в семпле (8, 16, 32, 64...)</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.SubChunk2Size">
+            <summary>Количество байт области данных</summary>
+        </member>
+        <member name="M:MathCore.WAV.Header.#ctor(System.Int32,System.Int32,MathCore.WAV.Format,System.Int16,System.Int32,System.Int32,System.Int16,System.Int16,System.Int32)">
+            <summary>Инициализация нового заголовка WAV-файла</summary>
+            <param name="ChunkSize">Размер файла - 8 байт</param>
+            <param name="SubChunk1Size">Оставшийся размер цепочки (для PCM = 16)</param>
+            <param name="AudioFormat">Формат (по умолчанию PCM = 1)</param>
+            <param name="ChannelsCount">Количество каналов</param>
+            <param name="SampleRate">Частота дискретизации</param>
+            <param name="ByteRate">Скорость передачи (байт/с) = <paramref name="SampleRate"/> * <paramref name="BlockAlign"/></param>
+            <param name="BlockAlign">Количество байт на один фрейм (один отсчёт по всем каналам)</param>
+            <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
+            <param name="SubChunk2Size">Количество байт области данных</param>
+        </member>
+        <member name="M:MathCore.WAV.Header.#ctor(System.Int32,System.Int16,System.Int32,System.Int16,System.Int16,System.Int32)">
+            <summary>Инициализация нового заголовка WAV-файла в PCM-формате</summary>
+            <param name="FileLength">Длина файла</param>
+            <param name="ChannelsCount">Количество каналов</param>
+            <param name="SampleRate">Частота дискретизации</param>
+            <param name="BlockAlign">Количество байт на один фрейм (один отсчёт по всем каналам)</param>
+            <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
+            <param name="DataLength">Количество байт области данных</param>
+        </member>
+        <member name="P:MathCore.WAV.Wav.DataLength">
+            <summary>полная длина файла в байтах включая заголовок</summary>
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._ChannelsCount">
+            <summary>Число каналов</summary>
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._SampleRate">
+            <summary>Частота дискретизации</summary>
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._BlockAlign">
+            <summary>Количество байт на один фрейм (один отсчёт по всем каналам)</summary>
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._BitsPerSample">
+            <summary>Число бит на канал</summary>
+        </member>
+        <member name="P:MathCore.WAV.WavFileWriter.ChannelsCount">
+            <summary>Число каналов</summary>
+        </member>
+        <member name="P:MathCore.WAV.WavFileWriter.SampleRate">
+            <summary>Частота дискретизации</summary>
+        </member>
+        <member name="P:MathCore.WAV.WavFileWriter.dt">
+            <summary>Период дискретизации</summary>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.#ctor(System.String,System.Int16,System.Int32,System.Int16)">
+            <summary>Инициализация нового экземпляра <see cref="T:MathCore.WAV.WavFileWriter"/></summary>
+            <param name="FileName">Имя файла для записи данных</param>
+            <param name="ChannelsCount">Число каналов (по умолчанию 1)</param>
+            <param name="SampleRate">Частота дискретизации в Гц (по умолчанию 44'100 Гц, или 44,1кГц)</param>
+            <param name="BitsPerSample">Число бит на канал (по умолчанию 16 бит на канал)</param>
+        </member>
+    </members>
+</doc>

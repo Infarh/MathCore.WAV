@@ -13,7 +13,9 @@ namespace MathCore.WAV.ConsoleTests
 
         public static void Main(string[] args)
         {
-            const double max_time = 5; // sec.
+            var max_time = 5d; // sec.
+            if (args?.Length >= 3 && double.TryParse(args[2], out var vmax_time))
+                max_time = vmax_time;
             using (var test_wave = new WavFileWriter("test_data.wav", 1))
             {
                 double fd = test_wave.SampleRate;
@@ -28,7 +30,7 @@ namespace MathCore.WAV.ConsoleTests
                 if (args?.Length >= 2 && double.TryParse(args[1], out var va0))
                     a0 = va0;
 
-                Console.WriteLine("Generating sin wave with\r\n\tf0:{0}Hz\r\n\tA0:{1}", f0, a0);
+                Console.WriteLine("Generating sin wave with\r\n\tf0:{0}Hz\r\n\tA0:{1}\r\n\ttime:{2}sec.", f0, a0, max_time);
 
                 for (var i = 0; i < samples_count; i++)
                     test_wave.Write((long)(a0 * Math.Sin(w0 * i * dt)));
