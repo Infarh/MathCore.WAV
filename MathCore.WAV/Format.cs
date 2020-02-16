@@ -1,8 +1,11 @@
-﻿
-// ReSharper disable UnusedMember.Global
-
+﻿// ReSharper disable UnusedMember.Global
+// ReSharper disable IdentifierTypo
+// ReSharper disable CommentTypo
+// ReSharper disable InconsistentNaming
 namespace MathCore.WAV
 {
+    /// <summary>Формат WAV-файла</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1027:Mark enums with FlagsAttribute", Justification = "Не является флаговым значением")]
     public enum Format : short
     {
         ///<sumary>Microsoft Corporation</sumary>

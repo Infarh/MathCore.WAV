@@ -4,27 +4,38 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MathCore.WAV.Service;
 
+using MathCore.WAV.Service;
+// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ConvertToAutoPropertyWhenPossible
 // ReSharper disable ConvertToAutoProperty
-
 namespace MathCore.WAV
 {
+    /// <summary>Заголовок WAV-файла</summary>
     [StructLayout(LayoutKind.Sequential, Size = Length, CharSet = CharSet.Auto, Pack = 1)]
-    public readonly struct Header
+    public readonly struct Header : IEquatable<Header>
     {
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Загрузить данные заголовка из объекта чтения двоичных данных</summary>
+        /// <param name="reader">Объект чтения двоичных данных, осуществляющий доступ к источнику данных</param>
+        /// <returns>Прочитанный заголовок</returns>
         public static Header Load(BinaryReader reader) => new Header(reader);
 
+        /// <summary>Загрузить данные заголовка из объекта чтения двоичных данных</summary>
+        /// <param name="stream">Поток байт данных в WAV-формате</param>
+        /// <returns>Прочитанный заголовок</returns>
         public static Header Load(Stream stream) => new Header(stream);
 
-        //public static Header Load(byte[] buffer) => buffer.ConvertToStructure<Header>();
+        /* ------------------------------------------------------------------------------------- */
 
         /// <summary>Длина заголовка</summary>
         public const int Length = 44;
 
+
+        /* ------------------------------------------------------------------------------------- */
         /// <summary>Идентификатор заголовка файла. Должен содержать символы "RIFF"</summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         private readonly byte[] _ChunkID;
@@ -68,6 +79,8 @@ namespace MathCore.WAV
         /// <summary>Количество байт области данных</summary>
         private readonly int _SubChunk2Size;
 
+        /* ------------------------------------------------------------------------------------- */
+
         /// <summary>Должен содержать строку "RIFF"</summary>
         public string ChunkID => Encoding.UTF8.GetString(_ChunkID);
 
@@ -95,22 +108,28 @@ namespace MathCore.WAV
         /// <summary>Частота дискретизации</summary>
         public int SampleRate => _SampleRate;
 
-        /// <summary>Количество байт на один фрейм (один отсчёт по всем кналам)</summary>
+        /// <summary>Количество байт на один фрейм (один отсчёт по всем каналам)</summary>
         public short BlockAlign => _BlockAlign;
 
         /// <summary>Количество бит в семпле (8, 16, 32, 64...)</summary>
         public short BitsPerSample => _BitsPerSample;
 
+        /// <summary>Байт на один отсчёт</summary>
         public int BytesPerSample => _BitsPerSample >> 3;
 
         /// <summary>Количество байт области данных</summary>
         public int SubChunk2Size => _SubChunk2Size;
 
+        /// <summary>Длина файла в секундах</summary>
         public double TimeLengthInSeconds => (double)_SubChunk2Size / _ByteRate;
 
+        /// <summary>Длина файла во времени</summary>
         public TimeSpan TimeLength => TimeSpan.FromSeconds(TimeLengthInSeconds);
 
+        /// <summary>Число фреймов в файле</summary>
         public int FrameCount => _SubChunk2Size / _BlockAlign;
+
+        /* ------------------------------------------------------------------------------------- */
 
         /// <summary>Инициализация нового заголовка WAV-файла</summary>
         /// <param name="ChunkSize">Размер файла - 8 байт</param>
@@ -137,7 +156,7 @@ namespace MathCore.WAV
             _ChunkID = Encoding.UTF8.GetBytes("RIFF");
             _ChunkSize = ChunkSize;
             _Format = Encoding.UTF8.GetBytes("WAVE");
-            _SubChunk1Id = Encoding.UTF8.GetBytes("fmt\0x20");
+            _SubChunk1Id = Encoding.UTF8.GetBytes("fmt ");
             _SubChunk1Size = AudioFormat == WAV.Format.PCM ? 16 : SubChunk1Size;
             _AudioFormat = AudioFormat;
             _ChannelsCount = ChannelsCount;
@@ -180,22 +199,32 @@ namespace MathCore.WAV
             _SubChunk2Id = Encoding.UTF8.GetBytes("data");
         }
 
+        /// <summary>Инициализация нового заголовка</summary>
+        /// <param name="stream">Поток байт из которого будет осуществляться чтение данных</param>
+        /// <exception cref="ArgumentNullException">В случае если поток для чтения данных не задан</exception>
+        /// <exception cref="ArgumentException">В случае если длина потока байт меньше <see cref="Length"/></exception>
+        /// <exception cref="FormatException">В случае нарушения формата заголовка, либо рассогласованности значений полей заголовка</exception>
         public Header(Stream stream) : this(new BinaryReader(stream ?? throw new ArgumentNullException(nameof(stream)))) { }
 
+        /// <summary>Инициализация нового заголовка</summary>
+        /// <param name="reader">Объект, осуществляющий чтение источника данных</param>
+        /// <exception cref="ArgumentNullException">В случае если объект для чтения данных не задан</exception>
+        /// <exception cref="ArgumentException">В случае если длина потока байт меньше <see cref="Length"/></exception>
+        /// <exception cref="FormatException">В случае нарушения формата заголовка, либо рассогласованности значений полей заголовка</exception>
         public Header(BinaryReader reader)
         {
             if (reader is null)
                 throw new ArgumentNullException(nameof(reader));
 
             var file_length = (reader.BaseStream as FileStream)?.Length ?? -1;
-            if (file_length == 0)
+            if (file_length <= 44)
                 throw new ArgumentException("Попытка чтения пустого файла");
             //if (file_length != -1 && file_length < 44)
             //    throw new FormatException("Размер файла недостаточен для хранения даже заголовка");
 
             #region Последовательная загрузка
 
-            //Чтерие текстовой метки "RIFF" (кодировка UTF-8)
+            //Чтение текстовой метки "RIFF" (кодировка UTF-8)
             _ChunkID = reader.ReadBytes(4); // RIFF 0..3 (4)
             if (Encoding.UTF8.GetString(_ChunkID) != "RIFF")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура RIFF в начале потока данных");
@@ -260,6 +289,10 @@ namespace MathCore.WAV
             #endregion
         }
 
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Выполнить запись заголовка в объект для записи двоичных данных</summary>
+        /// <param name="writer">Объект, осуществляющий запись данных в двоичном виде</param>
         public void WriteTo(BinaryWriter writer)
         {
             writer.Write(_ChunkID);
@@ -281,6 +314,9 @@ namespace MathCore.WAV
             writer.Write(_SubChunk2Size);
         }
 
+        /// <summary>Выполнить асинхронную запись заголовка в объект для записи двоичных данных</summary>
+        /// <param name="writer">Объект, осуществляющий запись данных в двоичном виде</param>
+        /// <param name="Cancel">Признак отмены асинхронной операции</param>
         public async Task WriteToAsync(BinaryWriter writer, CancellationToken Cancel = default)
         {
             await writer.WriteAsync(_ChunkID, Cancel);
@@ -301,5 +337,49 @@ namespace MathCore.WAV
             await writer.WriteAsync(_SubChunk2Id, Cancel);
             await writer.WriteAsync(_SubChunk2Size, Cancel);
         }
+
+        /// <inheritdoc />
+        public bool Equals(Header other) =>
+            _ChunkSize == other._ChunkSize
+            && _AudioFormat == other._AudioFormat
+            && _ChannelsCount == other._ChannelsCount
+            && _SampleRate == other._SampleRate
+            && _ByteRate == other._ByteRate
+            && _BlockAlign == other._BlockAlign
+            && _BitsPerSample == other._BitsPerSample
+            && _SubChunk2Size == other._SubChunk2Size;
+
+        /// <inheritdoc />
+        public override bool Equals(object obj) => obj is Header other && Equals(other);
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hash_code = _ChunkID.GetItemsHashCode();
+                hash_code = (hash_code * 397) ^ _ChunkSize;
+                hash_code = (hash_code * 397) ^ _Format.GetItemsHashCode();
+                hash_code = (hash_code * 397) ^ _SubChunk1Id.GetItemsHashCode();
+                hash_code = (hash_code * 397) ^ _SubChunk1Size;
+                hash_code = (hash_code * 397) ^ (int)_AudioFormat;
+                hash_code = (hash_code * 397) ^ _ChannelsCount.GetHashCode();
+                hash_code = (hash_code * 397) ^ _SampleRate;
+                hash_code = (hash_code * 397) ^ _ByteRate;
+                hash_code = (hash_code * 397) ^ _BlockAlign.GetHashCode();
+                hash_code = (hash_code * 397) ^ _BitsPerSample.GetHashCode();
+                hash_code = (hash_code * 397) ^ _SubChunk2Id.GetItemsHashCode();
+                hash_code = (hash_code * 397) ^ _SubChunk2Size;
+                return hash_code;
+            }
+        }
+
+        /// <summary>Оператор проверки равенства двух заголовков</summary>
+        public static bool operator ==(Header left, Header right) => left.Equals(right);
+
+        /// <summary>Оператор проверки неравенства двух заголовков</summary>
+        public static bool operator !=(Header left, Header right) => !left.Equals(right);
+
+        /* ------------------------------------------------------------------------------------- */
     }
 }

@@ -6,11 +6,20 @@ using System.Threading;
 
 namespace MathCore.WAV
 {
+    /// <summary>Объект чтения данных WAV в формате PCM из потока</summary>
     public class WavStream : Wav, IDisposable
     {
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Поток байт данных, из которого требуется выполнять чтение</summary>
         private readonly Stream _DataStream;
+
+        /// <summary>Признак того, что при вызове метода <see cref="Dispose()"/> поток <see cref="_DataStream"/> закрывать не требуется</summary>
         private readonly bool _LeaveOpen;
 
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <inheritdoc />
         public override Frame this[int i]
         {
             get
@@ -31,6 +40,11 @@ namespace MathCore.WAV
             }
         }
 
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Инициализация нового экземпляра <see cref="WavStream"/></summary>
+        /// <param name="DataStream">Поток байт данных, из которого требуется выполнять чтение</param>
+        /// <param name="LeaveOpen">Признак того, что при вызове метода <see cref="Dispose()"/> поток <paramref name="DataStream"/> закрывать не требуется</param>
         public WavStream(Stream DataStream, bool LeaveOpen = false)
             : base(Header.Load(DataStream ?? throw new ArgumentNullException(nameof(DataStream))))
         {
@@ -38,7 +52,15 @@ namespace MathCore.WAV
             _LeaveOpen = LeaveOpen;
         }
 
-        public override Stream GetDataStream()
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>
+        /// Если поток является файловым, то файл открывается вновь.
+        /// Если в потоке можно выполнять перемещение, то положение в потоке изменяется на 44 байт (конец заголовка).
+        /// Иначе возвращается <see cref="_DataStream"/>
+        /// </summary>
+        /// <returns>Поток для чтения данных</returns>
+        protected override Stream GetDataStream()
         {
             if (_DataStream is FileStream file)
                 return new FileStream(file.Name, FileMode.Open);
@@ -47,6 +69,7 @@ namespace MathCore.WAV
             return _DataStream;
         }
 
+        /// <inheritdoc />
         public override IEnumerable<(double Time, long Value)> EnumerateSamples(int Channel)
         {
             Stream data_stream = null;
@@ -87,6 +110,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override async IAsyncEnumerable<(double Time, long Value)> EnumerateSamplesAsync(
             int Channel,
             IProgress<double> Progress = null,
@@ -133,6 +157,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamples()
         {
             Stream data_stream = null;
@@ -173,6 +198,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesAsync(
             IProgress<double> Progress = null,
             [EnumeratorCancellation] CancellationToken Cancel = default)
@@ -218,6 +244,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArray()
         {
             Stream data_stream = null;
@@ -258,6 +285,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArrayAsync(
             IProgress<double> Progress = null,
             [EnumeratorCancellation] CancellationToken Cancel = default)
@@ -303,13 +331,22 @@ namespace MathCore.WAV
             }
         }
 
+        /* ------------------------------------------------------------------------------------- */
+
+        #region IDisposable
+
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>Признак того, что объект разрушен</summary>
         private bool _Disposed;
+
+        /// <summary>Закрывает поток, если это необходимо</summary>
+        /// <param name="disposing">Выполнить освобождение управляемых ресурсов?</param>
         protected virtual void Dispose(bool disposing)
         {
             if (_Disposed || !disposing) return;
@@ -317,5 +354,9 @@ namespace MathCore.WAV
             if (!_LeaveOpen)
                 _DataStream.Dispose();
         }
+
+        #endregion
+
+        /* ------------------------------------------------------------------------------------- */
     }
 }

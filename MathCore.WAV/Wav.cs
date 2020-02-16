@@ -1,35 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-
+// ReSharper disable UnusedMember.Global
 namespace MathCore.WAV
 {
+    /// <summary>Объект для чтения данных WAV в формате PCM</summary>
     public abstract class Wav
     {
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Заголовок файла</summary>
         protected readonly Header _Header;
 
-        /// <summary>полная длина файла в байтах включая заголовок</summary>
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Полная длина файла в байтах включая заголовок</summary>
         public long DataLength => _Header.SubChunk2Size;
 
-        public int SamplingFrequency => _Header.SampleRate;
+        /// <summary>Частота дискретизации</summary>
+        public int SampleRate => _Header.SampleRate;
 
-        public int ByteRate => _Header.SampleRate;
+        /// <summary>Байт на один отсчёт</summary>
+        public int BytesPerSample => _Header.BytesPerSample;
 
+        /// <summary>Количество бит в семпле (8, 16, 32, 64...)</summary>
+        public int BitsPerSample => _Header.BitsPerSample;
+
+        /// <summary>Количество байт на один фрейм (один отсчёт по всем каналам)</summary>
         public short FrameLength => _Header.BlockAlign;
 
+        /// <summary>Число фреймов в файле</summary>
         public long FramesCount => _Header.FrameCount;
 
+        /// <summary>Период дискретизации</summary>
+#pragma warning disable IDE1006 // Стили именования
         public double dt => 1d / _Header.SampleRate;
+#pragma warning restore IDE1006 // Стили именования
 
-        public double FileTimeLength => FramesCount * dt;
+        /// <summary>Длина файла в секундах</summary>
+        public double FileTimeLength => _Header.TimeLengthInSeconds;
 
+        /// <summary>Количество каналов</summary>
         public int ChannelsCount => _Header.ChannelsCount;
 
-        public short SampleLength => (short)(((_Header.BitsPerSample - 1) >> 3) + 1);
+        /// <summary>Байт на один отсчёт</summary>
+        public int SampleLength => _Header.BytesPerSample;
 
+        /// <summary>Индексатор фреймов</summary>
+        /// <param name="i">Номер отсчёта в потоке</param>
+        /// <returns>Фрейм со значениями всех каналов</returns>
         public virtual Frame this[int i]
         {
             get
@@ -42,16 +63,27 @@ namespace MathCore.WAV
 
                 var sample_data = new byte[sample_length];
                 data_stream.Seek(data_offset, SeekOrigin.Begin);
-                if(data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
                     throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
                 return new Frame(i / (double)_Header.SampleRate, _Header.ChannelsCount, sample_data);
             }
         }
 
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Инициализатор данных <see cref="Wav"/></summary>
+        /// <param name="Header">Заголовок <see cref="Header"/></param>
         protected Wav(Header Header) => _Header = Header;
 
-        public abstract Stream GetDataStream();
+        /* ------------------------------------------------------------------------------------- */
 
+        /// <summary>Получить поток байт данных для осуществления процедуры чтения</summary>
+        /// <returns>Поток байт данных WAV</returns>
+        protected abstract Stream GetDataStream();
+
+        /// <summary>Прочитать все значения отсчётов канала</summary>
+        /// <param name="Channel">Номер канала</param>
+        /// <returns>Массив отсчётов канала</returns>
         public long[] GetChannel(int Channel)
         {
             var channels_count = _Header.ChannelsCount;
@@ -83,6 +115,11 @@ namespace MathCore.WAV
             return result;
         }
 
+        /// <summary>Асинхронно прочитать все значения отсчётов канала</summary>
+        /// <param name="Channel">Номер канала</param>
+        /// <param name="Progress">Объект информирования о прогрессе чтения в интервале значений от 0 до 1</param>
+        /// <param name="Cancel">Признак отмены асинхронной операции чтения</param>
+        /// <returns>Задача, возвращающая массив отсчётов канала</returns>
         public async Task<long[]> GetChannelAsync(int Channel, IProgress<double> Progress = null, CancellationToken Cancel = default)
         {
             Cancel.ThrowIfCancellationRequested();
@@ -117,6 +154,9 @@ namespace MathCore.WAV
             return result;
         }
 
+        /// <summary>Получить массивы значений отсчётов всех каналов</summary>
+        /// <returns>Массив массивов значений всех каналов</returns>
+        /// <exception cref="InvalidOperationException">Если при чтении очередного значения будет число прочитанных байт не будет равно размеру одного кадра</exception>
         public long[][] GetChannels()
         {
             using var data_stream = GetDataStream();
@@ -149,6 +189,11 @@ namespace MathCore.WAV
             return result;
         }
 
+        /// <summary>Асинхронно получить массивы значений отсчётов всех каналов</summary>
+        /// <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+        /// <param name="Cancel">Признак отмены асинхронной операции</param>
+        /// <returns>Задача, возвращающая массив массивов значений всех каналов</returns>
+        /// <exception cref="InvalidOperationException">Если при чтении очередного значения будет число прочитанных байт не будет равно размеру одного кадра</exception>
         public async Task<long[][]> GetChannelsAsync(IProgress<double> Progress, CancellationToken Cancel = default)
         {
             Cancel.ThrowIfCancellationRequested();
@@ -184,16 +229,38 @@ namespace MathCore.WAV
             return result;
         }
 
+        /// <summary>Выполнить перечисление отсчётов значений канала</summary>
+        /// <param name="Channel">Индекс канала, отсчёты которого надо перечислить</param>
+        /// <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующее значение</returns>
         public abstract IEnumerable<(double Time, long Value)> EnumerateSamples(int Channel);
 
+        /// <summary>Выполнить асинхронное перечисление отсчётов значений канала</summary>
+        /// <param name="Channel">Индекс канала, отсчёты которого надо перечислить</param>
+        /// <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+        /// <param name="Cancel">Признак отмены асинхронной операции</param>
+        /// <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующее значение</returns>
         public abstract IAsyncEnumerable<(double Time, long Value)> EnumerateSamplesAsync(int Channel, IProgress<double> Progress = null, CancellationToken Cancel = default);
 
+        /// <summary>Выполнить перечисление отсчётов значений всех каналов</summary>
+        /// <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов</returns>
         public abstract IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamples();
 
+        /// <summary>Выполнить асинхронное перечисление отсчётов значений всех каналов</summary>
+        /// <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+        /// <param name="Cancel">Признак отмены асинхронной операции</param>
+        /// <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов</returns>
         public abstract IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesAsync(IProgress<double> Progress = null, CancellationToken Cancel = default);
 
+        /// <summary>Выполнить перечисление отсчётов значений всех каналов использующее в процессе один и тот же буферный массив</summary>
+        /// <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов, значения которых копируются в один и тот же передаваемый массив</returns>
         public abstract IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArray();
 
+        /// <summary>Выполнить асинхронное перечисление отсчётов значений всех каналов использующее в процессе один и тот же буферный массив</summary>
+        /// <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+        /// <param name="Cancel">Признак отмены асинхронной операции</param>
+        /// <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов, значения которых копируются в один и тот же передаваемый массив</returns>
         public abstract IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArrayAsync(IProgress<double> Progress = null, CancellationToken Cancel = default);
+
+        /* ------------------------------------------------------------------------------------- */
     }
 }

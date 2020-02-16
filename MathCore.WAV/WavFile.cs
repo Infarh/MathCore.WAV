@@ -3,31 +3,45 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using MathCore.WAV.Service;
 
+using MathCore.WAV.Service;
+// ReSharper disable UnusedType.Global
+// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ConvertToAutoPropertyWhenPossible
 // ReSharper disable UnusedMember.Global
-
 namespace MathCore.WAV
 {
-    public class WavFile : Wav//, IEnumerable<Frame>
+    /// <summary>Объект для чтения wav-файла в формате PCM</summary>
+    public class WavFile : Wav
     {
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Читаемый файл данных</summary>
         public FileInfo File { get; }
 
+        /// <summary>Длина файла</summary>
         public long FullLength => File.Length;
 
+        /* ------------------------------------------------------------------------------------- */
 
+        /// <summary>Инициализация нового экземпляра <see cref="WavFile"/></summary>
+        /// <param name="FileName">Имя файла с данными для чтения</param>
         public WavFile(string FileName) : this(new FileInfo(FileName ?? throw new ArgumentNullException(nameof(FileName)))) { }
 
+        /// <summary>Инициализация нового экземпляра <see cref="WavFile"/></summary>
+        /// <param name="File">файл данных для чтения</param>
         public WavFile(FileInfo File) : base(File.OpenRead().Using(Header.Load)) => this.File = File;
 
-        public override Stream GetDataStream()
+        /// <summary>Открывает файловый поток и переходит к 44 байту (началу блока данных)</summary>
+        /// <returns>Файловый поток для чтения данных</returns>
+        protected override Stream GetDataStream()
         {
             var stream = File.OpenRead();
             stream.Seek(Header.Length, SeekOrigin.Begin);
             return stream;
         }
 
+        /// <inheritdoc />
         public override IEnumerable<(double Time, long Value)> EnumerateSamples(int Channel)
         {
             using var data_stream = GetDataStream();
@@ -45,7 +59,7 @@ namespace MathCore.WAV
             for (var i = 0; i < data_length; i++)
             {
                 data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
-                if(data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
                     yield break;
                 var value = bytes_per_sample switch
                 {
@@ -59,8 +73,9 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override async IAsyncEnumerable<(double Time, long Value)> EnumerateSamplesAsync(
-            int Channel, 
+            int Channel,
             IProgress<double> Progress = null,
             [EnumeratorCancellation] CancellationToken Cancel = default)
         {
@@ -96,6 +111,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamples()
         {
             using var data_stream = GetDataStream();
@@ -112,7 +128,7 @@ namespace MathCore.WAV
             {
                 var result = new long[channels_count];
                 data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
-                if(data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
                     yield break;
                 for (var channel = 0; channel < channels_count; channel++)
                     result[channel] = bytes_per_sample switch
@@ -127,8 +143,9 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesAsync(
-            IProgress<double> Progress = null, 
+            IProgress<double> Progress = null,
             [EnumeratorCancellation] CancellationToken Cancel = default)
         {
             Cancel.ThrowIfCancellationRequested();
@@ -163,6 +180,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArray()
         {
             using var data_stream = GetDataStream();
@@ -179,7 +197,7 @@ namespace MathCore.WAV
             for (var i = 0; i < data_length; i++)
             {
                 data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
-                if(data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
                     yield break;
                 for (var channel = 0; channel < channels_count; channel++)
                     result[channel] = bytes_per_sample switch
@@ -194,6 +212,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <inheritdoc />
         public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArrayAsync(
             IProgress<double> Progress = null,
             [EnumeratorCancellation] CancellationToken Cancel = default)
@@ -229,5 +248,7 @@ namespace MathCore.WAV
                 yield return (i / (double)_Header.SampleRate, result);
             }
         }
+
+        /* ------------------------------------------------------------------------------------- */
     }
 }

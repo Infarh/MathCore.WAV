@@ -13,8 +13,8 @@ namespace MathCore.WAV.ConsoleTests
         public static void Main(string[] args)
         {
             var max_time = 5d; // sec.
-            if (args?.Length > 2 && double.TryParse(args[2], out var vmax_time))
-                max_time = vmax_time;
+            if (args?.Length > 2 && double.TryParse(args[2], out var max_time_value))
+                max_time = max_time_value;
             using (var test_wave = new WavFileWriter("test_data.wav", 1))
             {
                 double fd = test_wave.SampleRate;

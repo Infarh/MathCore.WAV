@@ -4,6 +4,9 @@
         <name>MathCore.WAV</name>
     </assembly>
     <members>
+        <member name="T:MathCore.WAV.Format">
+            <summary>Формат WAV-файла</summary>
+        </member>
         <member name="F:MathCore.WAV.Format.Unknown">
             <sumary>Microsoft Corporation</sumary>
         </member>
@@ -406,8 +409,68 @@
         <member name="F:MathCore.WAV.Format.DVM">
             <sumary>FAST Multimedia AG</sumary>
         </member>
+        <member name="T:MathCore.WAV.Frame">
+            <summary>Фрейм, представляющий массив байт данных в единицу времени файла</summary>
+        </member>
+        <member name="F:MathCore.WAV.Frame._Time">
+            <summary>Значение времени отсчёта</summary>
+        </member>
+        <member name="F:MathCore.WAV.Frame._ChannelsCount">
+            <summary>Число каналов</summary>
+        </member>
+        <member name="F:MathCore.WAV.Frame._Data">
+            <summary>Массив байт данных фрейма</summary>
+        </member>
+        <member name="F:MathCore.WAV.Frame._BytesPerChannel">
+            <summary>Число байт на один канал</summary>
+        </member>
+        <member name="P:MathCore.WAV.Frame.Time">
+            <summary>Значение времени отсчёта</summary>
+        </member>
+        <member name="P:MathCore.WAV.Frame.ChannelsCount">
+            <summary>Число каналов</summary>
+        </member>
+        <member name="P:MathCore.WAV.Frame.Item(System.Int32)">
+            <summary>Получение значения канала по его индексу в фрейме</summary>
+            <param name="channel">Индекс канала</param>
+            <exception cref="T:System.NotSupportedException">Если длина канала не равна 8, 16, 32, 64 бита</exception>
+        </member>
+        <member name="M:MathCore.WAV.Frame.#ctor(System.Double,System.Int32,System.Byte[])">
+            <summary>Инициализация нового экземпляра <see cref="T:MathCore.WAV.Frame"/></summary>
+            <param name="Time">Значение времени отсчёта</param>
+            <param name="ChannelsCount">Число каналов</param>
+            <param name="data">Массив байт данных фрейма</param>
+        </member>
         <member name="M:MathCore.WAV.Frame.ToString">
             <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.Frame.Equals(MathCore.WAV.Frame)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.Frame.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.Frame.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.Frame.op_Equality(MathCore.WAV.Frame,MathCore.WAV.Frame)">
+            <summary>Оператор проверки равенства двух фреймов</summary>
+        </member>
+        <member name="M:MathCore.WAV.Frame.op_Inequality(MathCore.WAV.Frame,MathCore.WAV.Frame)">
+            <summary>Оператор проверки неравенства двух фреймов</summary>
+        </member>
+        <member name="T:MathCore.WAV.Header">
+            <summary>Заголовок WAV-файла</summary>
+        </member>
+        <member name="M:MathCore.WAV.Header.Load(System.IO.BinaryReader)">
+            <summary>Загрузить данные заголовка из объекта чтения двоичных данных</summary>
+            <param name="reader">Объект чтения двоичных данных, осуществляющий доступ к источнику данных</param>
+            <returns>Прочитанный заголовок</returns>
+        </member>
+        <member name="M:MathCore.WAV.Header.Load(System.IO.Stream)">
+            <summary>Загрузить данные заголовка из объекта чтения двоичных данных</summary>
+            <param name="stream">Поток байт данных в WAV-формате</param>
+            <returns>Прочитанный заголовок</returns>
         </member>
         <member name="F:MathCore.WAV.Header.Length">
             <summary>Длина заголовка</summary>
@@ -479,13 +542,25 @@
             <summary>Частота дискретизации</summary>
         </member>
         <member name="P:MathCore.WAV.Header.BlockAlign">
-            <summary>Количество байт на один фрейм (один отсчёт по всем кналам)</summary>
+            <summary>Количество байт на один фрейм (один отсчёт по всем каналам)</summary>
         </member>
         <member name="P:MathCore.WAV.Header.BitsPerSample">
             <summary>Количество бит в семпле (8, 16, 32, 64...)</summary>
         </member>
+        <member name="P:MathCore.WAV.Header.BytesPerSample">
+            <summary>Байт на один отсчёт</summary>
+        </member>
         <member name="P:MathCore.WAV.Header.SubChunk2Size">
             <summary>Количество байт области данных</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.TimeLengthInSeconds">
+            <summary>Длина файла в секундах</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.TimeLength">
+            <summary>Длина файла во времени</summary>
+        </member>
+        <member name="P:MathCore.WAV.Header.FrameCount">
+            <summary>Число фреймов в файле</summary>
         </member>
         <member name="M:MathCore.WAV.Header.#ctor(System.Int32,System.Int32,MathCore.WAV.Format,System.Int16,System.Int32,System.Int32,System.Int16,System.Int16,System.Int32)">
             <summary>Инициализация нового заголовка WAV-файла</summary>
@@ -508,8 +583,284 @@
             <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
             <param name="DataLength">Количество байт области данных</param>
         </member>
+        <member name="M:MathCore.WAV.Header.#ctor(System.IO.Stream)">
+            <summary>Инициализация нового заголовка</summary>
+            <param name="stream">Поток байт из которого будет осуществляться чтение данных</param>
+            <exception cref="T:System.ArgumentNullException">В случае если поток для чтения данных не задан</exception>
+            <exception cref="T:System.ArgumentException">В случае если длина потока байт меньше <see cref="F:MathCore.WAV.Header.Length"/></exception>
+            <exception cref="T:System.FormatException">В случае нарушения формата заголовка, либо рассогласованности значений полей заголовка</exception>
+        </member>
+        <member name="M:MathCore.WAV.Header.#ctor(System.IO.BinaryReader)">
+            <summary>Инициализация нового заголовка</summary>
+            <param name="reader">Объект, осуществляющий чтение источника данных</param>
+            <exception cref="T:System.ArgumentNullException">В случае если объект для чтения данных не задан</exception>
+            <exception cref="T:System.ArgumentException">В случае если длина потока байт меньше <see cref="F:MathCore.WAV.Header.Length"/></exception>
+            <exception cref="T:System.FormatException">В случае нарушения формата заголовка, либо рассогласованности значений полей заголовка</exception>
+        </member>
+        <member name="M:MathCore.WAV.Header.WriteTo(System.IO.BinaryWriter)">
+            <summary>Выполнить запись заголовка в объект для записи двоичных данных</summary>
+            <param name="writer">Объект, осуществляющий запись данных в двоичном виде</param>
+        </member>
+        <member name="M:MathCore.WAV.Header.WriteToAsync(System.IO.BinaryWriter,System.Threading.CancellationToken)">
+            <summary>Выполнить асинхронную запись заголовка в объект для записи двоичных данных</summary>
+            <param name="writer">Объект, осуществляющий запись данных в двоичном виде</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+        </member>
+        <member name="M:MathCore.WAV.Header.Equals(MathCore.WAV.Header)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.Header.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.Header.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.Header.op_Equality(MathCore.WAV.Header,MathCore.WAV.Header)">
+            <summary>Оператор проверки равенства двух заголовков</summary>
+        </member>
+        <member name="M:MathCore.WAV.Header.op_Inequality(MathCore.WAV.Header,MathCore.WAV.Header)">
+            <summary>Оператор проверки неравенства двух заголовков</summary>
+        </member>
+        <member name="T:MathCore.WAV.Service.Extensions">
+            <summary>Класс вспомогательных методов-расширений</summary>
+        </member>
+        <member name="M:MathCore.WAV.Service.Extensions.Using``2(``0,System.Func{``0,``1})">
+            <summary>Выполнить действие над разрушимым объектом, получить результат и освободить ресурсы по завершении</summary>
+            <typeparam name="T">Тип объекта, над которым требуется выполнить операцию извлечения данных</typeparam>
+            <typeparam name="TValue">Тип ожидаемого результата</typeparam>
+            <param name="obj">Объект, над которым требуется выполнить действие</param>
+            <param name="Selector">Метод, осуществляющий извлечение данных из объекта</param>
+            <returns>Полученный результат</returns>
+        </member>
+        <member name="M:MathCore.WAV.Service.Extensions.WriteAsync(System.IO.BinaryWriter,System.Byte[],System.Threading.CancellationToken)">
+            <summary>Выполнить асинхронную процедуру записи массива байт данных в объект записи двоичных данных</summary>
+            <param name="Writer">Объект записи двоичных данных</param>
+            <param name="buffer">Записываемый массив байт данных</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <returns>Задача асинхронной записи массива байт данных</returns>
+        </member>
+        <member name="M:MathCore.WAV.Service.Extensions.WriteAsync(System.IO.BinaryWriter,System.Int32,System.Threading.CancellationToken)">
+            <summary>Выполнить асинхронную процедуру записи целочисленного 4-байтового значения в объект записи двоичных данных</summary>
+            <param name="Writer">Объект записи двоичных данных</param>
+            <param name="value">Целочисленное 4-байтовое значение для записи</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <returns>Задача асинхронной записи целочисленного 4-байтового значения</returns>
+        </member>
+        <member name="M:MathCore.WAV.Service.Extensions.WriteAsync(System.IO.BinaryWriter,System.Int16,System.Threading.CancellationToken)">
+            <summary>Выполнить асинхронную процедуру записи целочисленного 2-байтового значения в объект записи двоичных данных</summary>
+            <param name="Writer">Объект записи двоичных данных</param>
+            <param name="value">Целочисленное 2-байтовое значение для записи</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <returns>Задача асинхронной записи целочисленного 2-байтового значения</returns>
+        </member>
+        <member name="M:MathCore.WAV.Service.Extensions.GetItemsHashCode``1(``0[])">
+            <summary>Вычислить хеш-сумму значений массива c учётом индекса значений</summary>
+            <typeparam name="T">Тип объектов массива</typeparam>
+            <param name="array">Массив, хеш-сумму значений ячеек которого требуется вычислить</param>
+            <returns>Шех-сумма длины и всех ячеек массива</returns>
+        </member>
+        <member name="T:MathCore.WAV.Wav">
+            <summary>Объект для чтения данных WAV в формате PCM</summary>
+        </member>
+        <member name="F:MathCore.WAV.Wav._Header">
+            <summary>Заголовок файла</summary>
+        </member>
         <member name="P:MathCore.WAV.Wav.DataLength">
-            <summary>полная длина файла в байтах включая заголовок</summary>
+            <summary>Полная длина файла в байтах включая заголовок</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.SampleRate">
+            <summary>Частота дискретизации</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.BytesPerSample">
+            <summary>Байт на один отсчёт</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.BitsPerSample">
+            <summary>Количество бит в семпле (8, 16, 32, 64...)</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.FrameLength">
+            <summary>Количество байт на один фрейм (один отсчёт по всем каналам)</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.FramesCount">
+            <summary>Число фреймов в файле</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.dt">
+            <summary>Период дискретизации</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.FileTimeLength">
+            <summary>Длина файла в секундах</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.ChannelsCount">
+            <summary>Количество каналов</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.SampleLength">
+            <summary>Байт на один отсчёт</summary>
+        </member>
+        <member name="P:MathCore.WAV.Wav.Item(System.Int32)">
+            <summary>Индексатор фреймов</summary>
+            <param name="i">Номер отсчёта в потоке</param>
+            <returns>Фрейм со значениями всех каналов</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.#ctor(MathCore.WAV.Header)">
+            <summary>Инициализатор данных <see cref="T:MathCore.WAV.Wav"/></summary>
+            <param name="Header">Заголовок <see cref="T:MathCore.WAV.Header"/></param>
+        </member>
+        <member name="M:MathCore.WAV.Wav.GetDataStream">
+            <summary>Получить поток байт данных для осуществления процедуры чтения</summary>
+            <returns>Поток байт данных WAV</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.GetChannel(System.Int32)">
+            <summary>Прочитать все значения отсчётов канала</summary>
+            <param name="Channel">Номер канала</param>
+            <returns>Массив отсчётов канала</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.GetChannelAsync(System.Int32,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>Асинхронно прочитать все значения отсчётов канала</summary>
+            <param name="Channel">Номер канала</param>
+            <param name="Progress">Объект информирования о прогрессе чтения в интервале значений от 0 до 1</param>
+            <param name="Cancel">Признак отмены асинхронной операции чтения</param>
+            <returns>Задача, возвращающая массив отсчётов канала</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.GetChannels">
+            <summary>Получить массивы значений отсчётов всех каналов</summary>
+            <returns>Массив массивов значений всех каналов</returns>
+            <exception cref="T:System.InvalidOperationException">Если при чтении очередного значения будет число прочитанных байт не будет равно размеру одного кадра</exception>
+        </member>
+        <member name="M:MathCore.WAV.Wav.GetChannelsAsync(System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>Асинхронно получить массивы значений отсчётов всех каналов</summary>
+            <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <returns>Задача, возвращающая массив массивов значений всех каналов</returns>
+            <exception cref="T:System.InvalidOperationException">Если при чтении очередного значения будет число прочитанных байт не будет равно размеру одного кадра</exception>
+        </member>
+        <member name="M:MathCore.WAV.Wav.EnumerateSamples(System.Int32)">
+            <summary>Выполнить перечисление отсчётов значений канала</summary>
+            <param name="Channel">Индекс канала, отсчёты которого надо перечислить</param>
+            <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующее значение</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.EnumerateSamplesAsync(System.Int32,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>Выполнить асинхронное перечисление отсчётов значений канала</summary>
+            <param name="Channel">Индекс канала, отсчёты которого надо перечислить</param>
+            <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующее значение</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.EnumerateSamples">
+            <summary>Выполнить перечисление отсчётов значений всех каналов</summary>
+            <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.EnumerateSamplesAsync(System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>Выполнить асинхронное перечисление отсчётов значений всех каналов</summary>
+            <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.EnumerateSamplesWithSingleArray">
+            <summary>Выполнить перечисление отсчётов значений всех каналов использующее в процессе один и тот же буферный массив</summary>
+            <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов, значения которых копируются в один и тот же передаваемый массив</returns>
+        </member>
+        <member name="M:MathCore.WAV.Wav.EnumerateSamplesWithSingleArrayAsync(System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>Выполнить асинхронное перечисление отсчётов значений всех каналов использующее в процессе один и тот же буферный массив</summary>
+            <param name="Progress">Объект информирования о прогрессе асинхронной операции чтения в диапазоне значений от 0 до 1</param>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <returns>Перечисление кортежей, включающих в себя временную отметку в секундах от начала файла и ей соответствующие значения всех каналов, значения которых копируются в один и тот же передаваемый массив</returns>
+        </member>
+        <member name="T:MathCore.WAV.WavFile">
+            <summary>Объект для чтения wav-файла в формате PCM</summary>
+        </member>
+        <member name="P:MathCore.WAV.WavFile.File">
+            <summary>Читаемый файл данных</summary>
+        </member>
+        <member name="P:MathCore.WAV.WavFile.FullLength">
+            <summary>Длина файла</summary>
+        </member>
+        <member name="M:MathCore.WAV.WavFile.#ctor(System.String)">
+            <summary>Инициализация нового экземпляра <see cref="T:MathCore.WAV.WavFile"/></summary>
+            <param name="FileName">Имя файла с данными для чтения</param>
+        </member>
+        <member name="M:MathCore.WAV.WavFile.#ctor(System.IO.FileInfo)">
+            <summary>Инициализация нового экземпляра <see cref="T:MathCore.WAV.WavFile"/></summary>
+            <param name="File">файл данных для чтения</param>
+        </member>
+        <member name="M:MathCore.WAV.WavFile.GetDataStream">
+            <summary>Открывает файловый поток и переходит к 44 байту (началу блока данных)</summary>
+            <returns>Файловый поток для чтения данных</returns>
+        </member>
+        <member name="M:MathCore.WAV.WavFile.EnumerateSamples(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavFile.EnumerateSamplesAsync(System.Int32,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavFile.EnumerateSamples">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavFile.EnumerateSamplesAsync(System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavFile.EnumerateSamplesWithSingleArray">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavFile.EnumerateSamplesWithSingleArrayAsync(System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:MathCore.WAV.WavStream">
+            <summary>Объект чтения данных WAV в формате PCM из потока</summary>
+        </member>
+        <member name="F:MathCore.WAV.WavStream._DataStream">
+            <summary>Поток байт данных, из которого требуется выполнять чтение</summary>
+        </member>
+        <member name="F:MathCore.WAV.WavStream._LeaveOpen">
+            <summary>Признак того, что при вызове метода <see cref="M:MathCore.WAV.WavStream.Dispose"/> поток <see cref="F:MathCore.WAV.WavStream._DataStream"/> закрывать не требуется</summary>
+        </member>
+        <member name="P:MathCore.WAV.WavStream.Item(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavStream.#ctor(System.IO.Stream,System.Boolean)">
+            <summary>Инициализация нового экземпляра <see cref="T:MathCore.WAV.WavStream"/></summary>
+            <param name="DataStream">Поток байт данных, из которого требуется выполнять чтение</param>
+            <param name="LeaveOpen">Признак того, что при вызове метода <see cref="M:MathCore.WAV.WavStream.Dispose"/> поток <paramref name="DataStream"/> закрывать не требуется</param>
+        </member>
+        <member name="M:MathCore.WAV.WavStream.GetDataStream">
+            <summary>
+            Если поток является файловым, то файл открывается вновь.
+            Если в потоке можно выполнять перемещение, то положение в потоке изменяется на 44 байт (конец заголовка).
+            Иначе возвращается <see cref="F:MathCore.WAV.WavStream._DataStream"/>
+            </summary>
+            <returns>Поток для чтения данных</returns>
+        </member>
+        <member name="M:MathCore.WAV.WavStream.EnumerateSamples(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavStream.EnumerateSamplesAsync(System.Int32,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavStream.EnumerateSamples">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavStream.EnumerateSamplesAsync(System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavStream.EnumerateSamplesWithSingleArray">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavStream.EnumerateSamplesWithSingleArrayAsync(System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:MathCore.WAV.WavStream.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="F:MathCore.WAV.WavStream._Disposed">
+            <summary>Признак того, что объект разрушен</summary>
+        </member>
+        <member name="M:MathCore.WAV.WavStream.Dispose(System.Boolean)">
+            <summary>Закрывает поток, если это необходимо</summary>
+            <param name="disposing">Выполнить освобождение управляемых ресурсов?</param>
+        </member>
+        <member name="T:MathCore.WAV.WavFileWriter">
+            <summary>Объект для записи файла в формате wav PCM</summary>
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._DataStream">
+            <summary>Поток данных</summary>
         </member>
         <member name="F:MathCore.WAV.WavFileWriter._ChannelsCount">
             <summary>Число каналов</summary>
@@ -538,6 +889,46 @@
             <param name="ChannelsCount">Число каналов (по умолчанию 1)</param>
             <param name="SampleRate">Частота дискретизации в Гц (по умолчанию 44'100 Гц, или 44,1кГц)</param>
             <param name="BitsPerSample">Число бит на канал (по умолчанию 16 бит на канал)</param>
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._ChannelValues">
+            <summary>Буферный Массив значений для записи вещественных значений</summary>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.Write(System.Double[])">
+            <summary>Записать вещественные значения в поток</summary>
+            <param name="Values">Массив значений каналов, записываемых данных</param>
+            <returns>Текущее значение времени записанных данных в секундах</returns>
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._WriteBuffer">
+            <summary>Буферный массив байт для записи данных одного фрейма, включающего отсчёты всех каналов в текущий момент времени</summary>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.Write(System.Int64[])">
+            <summary>Записать значения всех каналов на текущий момент времени</summary>
+            <param name="Values">Массив значений всех каналов в текущий момент времени</param>
+            <returns>Значение текущего времени записанного отсчёта в секундах</returns>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.WriteAsync(System.Int64[])">
+            <summary>Выполнить асинхронную операцию записи значений всех каналов на текущий момент времени</summary>
+            <param name="Values">Массив значений всех каналов в текущий момент времени</param>
+            <returns>Значение текущего времени записанного отсчёта в секундах</returns>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.WriteAsync(System.Threading.CancellationToken,System.Int64[])">
+            <summary>Выполнить асинхронную операцию записи значений всех каналов на текущий момент времени</summary>
+            <param name="Cancel">Признак отмены асинхронной операции</param>
+            <param name="Values">Массив значений всех каналов в текущий момент времени</param>
+            <returns>Значение текущего времени записанного отсчёта в секундах</returns>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="F:MathCore.WAV.WavFileWriter._Disposed">
+            <summary>Признак того, что файл был закрыт</summary>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.Dispose(System.Boolean)">
+            <summary>Выполняет запись заголовка файла (обновление данных о параметрах)</summary>
+            <param name="disposing">Выполнить освобождение ресурсов</param>
+        </member>
+        <member name="M:MathCore.WAV.WavFileWriter.DisposeAsync">
+            <summary>Выполняет процедуру асинхронной записи заголовка файла (обновление данных о параметрах)</summary>
         </member>
     </members>
 </doc>

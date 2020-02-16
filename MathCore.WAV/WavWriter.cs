@@ -1,17 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ConvertToAutoPropertyWhenPossible
-
 namespace MathCore.WAV
 {
+    /// <summary>Объект для записи файла в формате wav PCM</summary>
     public class WavFileWriter : IDisposable, IAsyncDisposable
     {
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Поток данных</summary>
         private readonly Stream _DataStream;
 
         /// <summary>Число каналов</summary>
@@ -26,6 +27,8 @@ namespace MathCore.WAV
         /// <summary>Число бит на канал</summary>
         private readonly short _BitsPerSample;
 
+        /* ------------------------------------------------------------------------------------- */
+
         /// <summary>Число каналов</summary>
         public int ChannelsCount => _ChannelsCount;
 
@@ -36,6 +39,8 @@ namespace MathCore.WAV
 #pragma warning disable IDE1006 // Стили именования
         public double dt => 1d / _SampleRate;
 #pragma warning restore IDE1006 // Стили именования
+
+        /* ------------------------------------------------------------------------------------- */
 
         /// <summary>Инициализация нового экземпляра <see cref="WavFileWriter"/></summary>
         /// <param name="FileName">Имя файла для записи данных</param>
@@ -62,7 +67,7 @@ namespace MathCore.WAV
 
             _ChannelsCount = ChannelsCount;
             _SampleRate = SampleRate;
-            _BlockAlign = (short) (ChannelsCount * (BitsPerSample >> 3));
+            _BlockAlign = (short)(ChannelsCount * (BitsPerSample >> 3));
             _BitsPerSample = BitsPerSample;
             _WriteBuffer = new byte[_BlockAlign];
             _ChannelValues = new long[_ChannelsCount];
@@ -72,7 +77,14 @@ namespace MathCore.WAV
             _DataStream.Write(header_bytes, 0, header_bytes.Length);
         }
 
+        /* ------------------------------------------------------------------------------------- */
+
+        /// <summary>Буферный Массив значений для записи вещественных значений</summary>
         private readonly long[] _ChannelValues;
+
+        /// <summary>Записать вещественные значения в поток</summary>
+        /// <param name="Values">Массив значений каналов, записываемых данных</param>
+        /// <returns>Текущее значение времени записанных данных в секундах</returns>
         public double Write(params double[] Values)
         {
             for (var i = 0; i < _ChannelsCount; i++)
@@ -80,11 +92,16 @@ namespace MathCore.WAV
             return Write(_ChannelValues);
         }
 
+        /// <summary>Буферный массив байт для записи данных одного фрейма, включающего отсчёты всех каналов в текущий момент времени</summary>
         private readonly byte[] _WriteBuffer;
+
+        /// <summary>Записать значения всех каналов на текущий момент времени</summary>
+        /// <param name="Values">Массив значений всех каналов в текущий момент времени</param>
+        /// <returns>Значение текущего времени записанного отсчёта в секундах</returns>
         public double Write(params long[] Values)
         {
             if (Values is null) throw new ArgumentNullException(nameof(Values));
-            if(Values.Length < _ChannelsCount) 
+            if (Values.Length < _ChannelsCount)
                 throw new ArgumentException($"Число каналов в файле задано равным {_ChannelsCount}, а для записи передано {Values.Length} значений");
 
             var byte_per_sample = _BitsPerSample >> 3;
@@ -100,7 +117,15 @@ namespace MathCore.WAV
             return (double)pos / _BlockAlign / _SampleRate;
         }
 
+        /// <summary>Выполнить асинхронную операцию записи значений всех каналов на текущий момент времени</summary>
+        /// <param name="Values">Массив значений всех каналов в текущий момент времени</param>
+        /// <returns>Значение текущего времени записанного отсчёта в секундах</returns>
         public ValueTask<double> WriteAsync(params long[] Values) => WriteAsync(CancellationToken.None, Values);
+
+        /// <summary>Выполнить асинхронную операцию записи значений всех каналов на текущий момент времени</summary>
+        /// <param name="Cancel">Признак отмены асинхронной операции</param>
+        /// <param name="Values">Массив значений всех каналов в текущий момент времени</param>
+        /// <returns>Значение текущего времени записанного отсчёта в секундах</returns>
         public async ValueTask<double> WriteAsync(CancellationToken Cancel, params long[] Values)
         {
             if (Values is null) throw new ArgumentNullException(nameof(Values));
@@ -121,15 +146,22 @@ namespace MathCore.WAV
             return (double)pos / _BlockAlign / _SampleRate;
         }
 
+        /* ------------------------------------------------------------------------------------- */
+
         #region IDisposable
 
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>Признак того, что файл был закрыт</summary>
         private bool _Disposed;
+
+        /// <summary>Выполняет запись заголовка файла (обновление данных о параметрах)</summary>
+        /// <param name="disposing">Выполнить освобождение ресурсов</param>
         protected virtual void Dispose(bool disposing)
         {
             if (_Disposed || !disposing) return;
@@ -151,6 +183,7 @@ namespace MathCore.WAV
             }
         }
 
+        /// <summary>Выполняет процедуру асинхронной записи заголовка файла (обновление данных о параметрах)</summary>
         public virtual async ValueTask DisposeAsync()
         {
             if (_Disposed) return;
@@ -171,5 +204,7 @@ namespace MathCore.WAV
         }
 
         #endregion
+
+        /* ------------------------------------------------------------------------------------- */
     }
 }
