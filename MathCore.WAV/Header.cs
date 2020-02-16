@@ -11,13 +11,13 @@ using MathCore.WAV.Service;
 namespace MathCore.WAV
 {
     [StructLayout(LayoutKind.Sequential, Size = Length, CharSet = CharSet.Auto, Pack = 1)]
-    public struct Header
+    public readonly struct Header
     {
-        public static Header Create(BinaryReader reader) => new Header(reader);
+        public static Header Load(BinaryReader reader) => new Header(reader);
 
-        public static Header Create(Stream stream) => new Header(stream);
+        public static Header Load(Stream stream) => new Header(stream);
 
-        public static Header Create(byte[] buffer) => buffer.ConvertToStructure<Header>();
+        //public static Header Load(byte[] buffer) => buffer.ConvertToStructure<Header>();
 
         /// <summary>Длина заголовка</summary>
         public const int Length = 44;
@@ -44,7 +44,7 @@ namespace MathCore.WAV
         private readonly Format _AudioFormat;
 
         /// <summary>Количество каналов</summary>
-        private readonly short _NumChannels;
+        private readonly short _ChannelsCount;
 
         /// <summary>Частота дискретизации Гц</summary>
         private readonly int _SampleRate;
@@ -87,7 +87,7 @@ namespace MathCore.WAV
         public Format AudioFormat => _AudioFormat;
 
         /// <summary>Количество каналов</summary>
-        public short NumChannels => _NumChannels;
+        public short ChannelsCount => _ChannelsCount;
 
         /// <summary>Частота дискретизации</summary>
         public int SampleRate => _SampleRate;
@@ -103,79 +103,103 @@ namespace MathCore.WAV
         /// <summary>Количество байт области данных</summary>
         public int SubChunk2Size => _SubChunk2Size;
 
-        /// <summary>Инициализация нового заголовка WAV-файла</summary>
-        /// <param name="ChunkSize">Размер файла - 8 байт</param>
-        /// <param name="SubChunk1Size">Оставшийся размер цепочки (для PCM = 16)</param>
-        /// <param name="AudioFormat">Формат (по умолчанию PCM = 1)</param>
-        /// <param name="NumChannels">Количество каналов</param>
-        /// <param name="SampleRate">Частота дискретизации</param>
-        /// <param name="ByteRate">Скорость передачи (байт/с)</param>
-        /// <param name="BlockAlign">Количество байт на один фрейм (один отсчёт по всем кналам)</param>
-        /// <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
-        /// <param name="SubChunk2Size">Количество байт области данных</param>
-        public Header
-        (
-            int ChunkSize,
-            int SubChunk1Size,
-            Format AudioFormat,
-            short NumChannels,
-            int SampleRate,
-            int ByteRate,
-            short BlockAlign,
-            short BitsPerSample,
-            int SubChunk2Size
-        )
-        {
-            _ChunkID = Encoding.UTF8.GetBytes("RIFF");
-            _ChunkSize = ChunkSize;
-            _Format = Encoding.UTF8.GetBytes("WAVE");
-            _SubChunk1Id = Encoding.UTF8.GetBytes("fmt\0x20");
-            _SubChunk1Size = SubChunk1Size;
-            _AudioFormat = AudioFormat;
-            _NumChannels = NumChannels;
-            _SampleRate = SampleRate;
-            _ByteRate = ByteRate;
-            _BlockAlign = BlockAlign;
-            _BitsPerSample = BitsPerSample;
-            _SubChunk2Size = SubChunk2Size;
-            _SubChunk2Id = Encoding.UTF8.GetBytes("data");
-        }
+        public double TimeLengthInSeconds => (double)_SubChunk2Size / _ByteRate;
 
-        public Header(Stream stream) : this(new BinaryReader(stream)) { }
+        public TimeSpan TimeLength => TimeSpan.FromSeconds(TimeLengthInSeconds);
+
+        public int FrameCount => _SubChunk2Size / _BlockAlign;
+
+        ///// <summary>Инициализация нового заголовка WAV-файла</summary>
+        ///// <param name="ChunkSize">Размер файла - 8 байт</param>
+        ///// <param name="SubChunk1Size">Оставшийся размер цепочки (для PCM = 16)</param>
+        ///// <param name="AudioFormat">Формат (по умолчанию PCM = 1)</param>
+        ///// <param name="NumChannels">Количество каналов</param>
+        ///// <param name="SampleRate">Частота дискретизации</param>
+        ///// <param name="ByteRate">Скорость передачи (байт/с)</param>
+        ///// <param name="BlockAlign">Количество байт на один фрейм (один отсчёт по всем кналам)</param>
+        ///// <param name="BitsPerSample">Количество бит в семпле (8, 16, 32, 64...)</param>
+        ///// <param name="SubChunk2Size">Количество байт области данных</param>
+        //public Header
+        //(
+        //    int ChunkSize,
+        //    int SubChunk1Size,
+        //    Format AudioFormat,
+        //    short NumChannels,
+        //    int SampleRate,
+        //    int ByteRate,
+        //    short BlockAlign,
+        //    short BitsPerSample,
+        //    int SubChunk2Size
+        //)
+        //{
+        //    _ChunkID = Encoding.UTF8.GetBytes("RIFF");
+        //    _ChunkSize = ChunkSize;
+        //    _Format = Encoding.UTF8.GetBytes("WAVE");
+        //    _SubChunk1Id = Encoding.UTF8.GetBytes("fmt\0x20");
+        //    _SubChunk1Size = SubChunk1Size;
+        //    _AudioFormat = AudioFormat;
+        //    _NumChannels = NumChannels;
+        //    _SampleRate = SampleRate;
+        //    _ByteRate = ByteRate;
+        //    _BlockAlign = BlockAlign;
+        //    _BitsPerSample = BitsPerSample;
+        //    _SubChunk2Size = SubChunk2Size;
+        //    _SubChunk2Id = Encoding.UTF8.GetBytes("data");
+        //}
+
+        public Header(Stream stream) : this(new BinaryReader(stream ?? throw new ArgumentNullException(nameof(stream)))) { }
 
         public Header(BinaryReader reader)
         {
+            if(reader is null) 
+                throw new ArgumentNullException(nameof(reader));
+
             var file_length = (reader.BaseStream as FileStream)?.Length ?? -1;
-            if (file_length == 0) throw new ArgumentException("Попытка чтения пустого файла");
-            if (file_length != -1 && file_length < 44) throw new FormatException("Размер файла недостаточен для хранения даже заголовка");
+            if (file_length == 0) 
+                throw new ArgumentException("Попытка чтения пустого файла");
+            if (file_length != -1 && file_length < 44) 
+                throw new FormatException("Размер файла недостаточен для хранения даже заголовка");
+
+            #region Последовательная загрузка
 
             _ChunkID = reader.ReadBytes(4); // RIFF 0..3 (4)
             if (Encoding.UTF8.GetString(_ChunkID) != "RIFF")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура RIFF в начале потока данных");
+
             _ChunkSize = reader.ReadInt32(); // 4..7 (4) = file_length - 8
             if (file_length != -1 && _ChunkSize != file_length - 8)
                 throw new FormatException("Размер файла в заголовке определён неверно");
+
             _Format = reader.ReadBytes(4); // WAVE 8..11 (4)
             if (Encoding.UTF8.GetString(_Format) != "WAVE")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура WAVE в заголовке");
+
             _SubChunk1Id = reader.ReadBytes(4); // fmt\0x20 12..15 (4)
             if (Encoding.UTF8.GetString(_SubChunk1Id) != "fmt ")
                 throw new FormatException("Ошибка формата - отсутствует сигнатура \"fmt \" в заголовке");
+
             _SubChunk1Size = reader.ReadInt32(); // 16..19 (4) = 16
             _AudioFormat = (Format)reader.ReadInt16(); // 20..21 (2)
             if (_AudioFormat == WAV.Format.PCM && _SubChunk1Size != 16)
                 throw new FormatException("Размер оставшейся части заголовка PCM формата не равен 16");
-            _NumChannels = reader.ReadInt16(); // 22..23 (2)
-            if (_NumChannels <= 0) throw new FormatException("Ошибка формата заголовка: количество каналов не может быть меньше, либо равно 0");
+
+            _ChannelsCount = reader.ReadInt16(); // 22..23 (2)
+            if (_ChannelsCount <= 0) 
+                throw new FormatException("Ошибка формата заголовка: количество каналов не может быть меньше, либо равно 0");
+
             _SampleRate = reader.ReadInt32(); // 24..27 (4)
             _ByteRate = reader.ReadInt32(); // 28..31 (4)
             _BlockAlign = reader.ReadInt16(); // 32..33 (2)
             _BitsPerSample = reader.ReadInt16(); // 34..35 (2)
             _SubChunk2Id = reader.ReadBytes(4); // 36..39 (4)
-            if (Encoding.UTF8.GetString(_SubChunk2Id) != "data") throw new FormatException("Ошибка формата - отсутствует сигнатура WAVE в заголовке");
+            if (Encoding.UTF8.GetString(_SubChunk2Id) != "data")
+                throw new FormatException("Ошибка формата - отсутствует сигнатура WAVE в заголовке");
+
             _SubChunk2Size = reader.ReadInt32(); // 40..43 (4) = file_length - 44
             if (file_length != -1 && _SubChunk2Size != file_length - Length)
                 throw new FormatException("Ошибка формата заголовка: неверно указан размер области данных файла");
+
+            #endregion
         }
     }
 }

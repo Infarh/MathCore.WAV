@@ -52,7 +52,7 @@ namespace MathCore.WAV
             for (var i = 0; i < _ChannelsCount; i++)
                 data[i] = this[i];
 
-            return $"{TimeSpan.FromSeconds(Time)}:{string.Join("|", data)}";
+            return $"{TimeSpan.FromSeconds(Time)}#{string.Join("|", data)}";
         }
     }
 }

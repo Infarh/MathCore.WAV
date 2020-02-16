@@ -11,54 +11,134 @@ namespace MathCore.WAV
     public class WavFile : IDisposable//, IEnumerable<WAVFrame>
     {
         private Stream _DataStream;
-        private readonly Header _Header;
+        private Header _Header;
 
-        public long FullLength => _DataStream.Length;
-        public long DataLength => FullLength - Header.Length;
+        private static Exception NotLoaded() => new InvalidOperationException("Не выполнена загрузка данных");
 
-        public int SamplingFrequency => _Header.SampleRate;
+        private Stream DataStream => _DataStream ?? throw NotLoaded();
 
-        public int ByteRate => _Header.SampleRate;
+        public Header Header => _DataStream is null ? throw NotLoaded() : _Header;
 
-        public short FrameLength => _Header.BlockAlign;
+        public FileInfo File => _DataStream is FileStream file_stream ? new FileInfo(file_stream.Name) : null;
 
-        public long FramesCount => DataLength / FrameLength;
+        /// <summary>полная длина файла в байтах включая заголовок</summary>
+        public long FullLength => DataStream.Length;
 
-        public double dt => 1d / _Header.SampleRate;
+        public long DataLength => Header.SubChunk2Size;
+
+        public int SamplingFrequency => Header.SampleRate;
+
+        public int ByteRate => Header.SampleRate;
+
+        public short FrameLength => Header.BlockAlign;
+
+        public long FramesCount => Header.FrameCount;
+
+        public double dt => 1d / Header.SampleRate;
 
         public double FileTimeLength => FramesCount * dt;
 
         protected long Position
         {
-            get => _DataStream.Position;
-            set => _DataStream.Seek(value - Header.Length, SeekOrigin.Begin);
+            get => DataStream.Position;
+            set => DataStream.Seek(value - Header.Length, SeekOrigin.Begin);
         }
 
-        public int ChannelsCount => _Header.NumChannels;
+        public int ChannelsCount => Header.ChannelsCount;
 
-        public short SampleLength => (short)(((_Header.BitsPerSample - 1) >> 3) + 1);
+        public short SampleLength => (short)(((Header.BitsPerSample - 1) >> 3) + 1);
 
         public Frame this[int i]
         {
             get
             {
-                var sample_data = new byte[_Header.BlockAlign];
-                _DataStream.Seek(i * SampleLength + Header.Length, SeekOrigin.Begin);
-                _DataStream.Read(sample_data, 0, sample_data.Length);
-                return new Frame(i / (double)_Header.SampleRate, _Header.NumChannels, sample_data);
+                var sample_length = _Header.BlockAlign;
+                var data_offset = Header.Length + i * sample_length;
+                if (i < 0 || data_offset >= _DataStream.Length - sample_length)
+                    throw new EndOfStreamException("Попытка чтения данных за пределами потока");
+
+                var sample_data = new byte[sample_length];
+                _DataStream.Seek(data_offset, SeekOrigin.Begin);
+                _DataStream.Read(sample_data, 0, sample_length);
+                return new Frame(i / (double)_Header.SampleRate, _Header.ChannelsCount, sample_data);
             }
         }
 
-        public WavFile(string FileName) : this(new FileInfo(FileName)) { }
+        public Header LoadFrom(string FileName) => LoadFrom(new FileInfo(FileName ?? throw new ArgumentNullException(nameof(FileName))));
 
-        public WavFile(FileInfo File) : this(File.Open(FileMode.Open, FileAccess.Read, FileShare.Read)) { }
+        public Header LoadFrom(FileInfo DataFile) => LoadFrom((DataFile ?? throw new ArgumentNullException(nameof(DataFile))).OpenRead());
 
-        protected WavFile(Stream DataStream)
+        public Header LoadFrom(Stream Stream)
         {
-            _DataStream = DataStream;
-            if (_DataStream.Position != 0) _DataStream.Seek(0L, SeekOrigin.Begin);
-            _Header = _DataStream.FromStructure<Header>();
+            if (_DataStream != null)
+                throw new InvalidOperationException("Поток данных уже был загружен в данный экземпляр");
+            _DataStream = Stream;
+            return _Header = Header.Load(Stream);
         }
+
+        public long[] GetChannel(int Channel)
+        {
+            DataStream.Seek(0, SeekOrigin.Begin);
+            var channels_count = _Header.ChannelsCount;
+            if (Channel >= channels_count)
+                throw new ArgumentOutOfRangeException(nameof(Channel), Channel, $"В файле содержится {channels_count} каналов, а запрошен {Channel}");
+
+            var sample_length = _Header.BlockAlign;
+            var sample_data = new byte[sample_length];
+
+            var data_length = _Header.FrameCount;
+            var result = new long[data_length];
+
+            var bytes_per_sample = _Header.BytesPerSample;
+            for (var i = 0; i < data_length; i++)
+            {
+                _DataStream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
+                _DataStream.Read(sample_data, 0, sample_length);
+                result[i] = bytes_per_sample switch
+                {
+                    1 => sample_data[Channel],
+                    2 => BitConverter.ToInt16(sample_data, Channel * bytes_per_sample),
+                    4 => BitConverter.ToInt32(sample_data, Channel * bytes_per_sample),
+                    8 => BitConverter.ToInt64(sample_data, Channel * bytes_per_sample),
+                    _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
+                };
+            }
+            return result;
+        }
+
+        public long[][] GetChannels()
+        {
+            DataStream.Seek(0, SeekOrigin.Begin);
+            var channels_count = _Header.ChannelsCount;
+
+            var sample_length = _Header.BlockAlign;
+            var sample_data = new byte[sample_length];
+
+            var data_length = _Header.FrameCount;
+            var result = new long[channels_count][];
+            for(var channel = 0; channel < channels_count; channel++)
+                result[channel] = new long[data_length];
+
+            var bytes_per_sample = _Header.BytesPerSample;
+            for (var i = 0; i < data_length; i++)
+            {
+                _DataStream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
+                _DataStream.Read(sample_data, 0, sample_length);
+                for(var channel = 0; channel < channels_count; channel++)
+                    result[channel][i] = bytes_per_sample switch
+                    {
+                        1 => sample_data[channel],
+                        2 => BitConverter.ToInt16(sample_data, channel * bytes_per_sample),
+                        4 => BitConverter.ToInt32(sample_data, channel * bytes_per_sample),
+                        8 => BitConverter.ToInt64(sample_data, channel * bytes_per_sample),
+                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
+                    };
+            }
+            return result;
+        }
+
+
+        #region IDisposable
 
         public void Dispose()
         {
@@ -70,9 +150,11 @@ namespace MathCore.WAV
         {
             if (!Disposing) return;
             if (_DataStream is null) return;
-            _DataStream.Dispose();
+            _DataStream?.Dispose();
             _DataStream = null;
         }
+
+        #endregion
 
         //IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
