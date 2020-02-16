@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 
 namespace MathCore.WAV.ConsoleTests
@@ -14,7 +13,7 @@ namespace MathCore.WAV.ConsoleTests
         public static void Main(string[] args)
         {
             var max_time = 5d; // sec.
-            if (args?.Length >= 3 && double.TryParse(args[2], out var vmax_time))
+            if (args?.Length > 2 && double.TryParse(args[2], out var vmax_time))
                 max_time = vmax_time;
             using (var test_wave = new WavFileWriter("test_data.wav", 1))
             {
@@ -23,11 +22,11 @@ namespace MathCore.WAV.ConsoleTests
                 var dt = 1 / fd;
 
                 var f0 = 1e3;
-                if (args?.Length >= 1 && double.TryParse(args[0], out var vf0))
+                if (args?.Length > 0 && double.TryParse(args[0], out var vf0))
                     f0 = vf0;
                 var w0 = 2 * Math.PI * f0;
                 var a0 = 1000d;
-                if (args?.Length >= 2 && double.TryParse(args[1], out var va0))
+                if (args?.Length > 1 && double.TryParse(args[1], out var va0))
                     a0 = va0;
 
                 Console.WriteLine("Generating sin wave with\r\n\tf0:{0}Hz\r\n\tA0:{1}\r\n\ttime:{2}sec.", f0, a0, max_time);

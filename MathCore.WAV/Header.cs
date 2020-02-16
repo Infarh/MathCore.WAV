@@ -2,6 +2,9 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using MathCore.WAV.Service;
 
 // ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
 // ReSharper disable UnusedMember.Global
@@ -276,6 +279,27 @@ namespace MathCore.WAV
 
             writer.Write(_SubChunk2Id);
             writer.Write(_SubChunk2Size);
+        }
+
+        public async Task WriteToAsync(BinaryWriter writer, CancellationToken Cancel = default)
+        {
+            await writer.WriteAsync(_ChunkID, Cancel);
+            await writer.WriteAsync(_ChunkSize, Cancel);
+            await writer.WriteAsync(_Format, Cancel);
+
+            await writer.WriteAsync(_SubChunk1Id, Cancel);
+            await writer.WriteAsync(_SubChunk1Size, Cancel);
+
+            await writer.WriteAsync((short)_AudioFormat, Cancel);
+
+            await writer.WriteAsync(_ChannelsCount, Cancel);
+            await writer.WriteAsync(_SampleRate, Cancel);
+            await writer.WriteAsync(_ByteRate, Cancel);
+            await writer.WriteAsync(_BlockAlign, Cancel);
+            await writer.WriteAsync(_BitsPerSample, Cancel);
+
+            await writer.WriteAsync(_SubChunk2Id, Cancel);
+            await writer.WriteAsync(_SubChunk2Size, Cancel);
         }
     }
 }

@@ -1,6 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+// ReSharper disable ArgumentsStyleLiteral
+// ReSharper disable ArgumentsStyleNamedExpression
+// ReSharper disable ArgumentsStyleOther
 
 namespace MathCore.WAV.Service
 {
@@ -40,5 +45,36 @@ namespace MathCore.WAV.Service
         {
             using (obj) return Selector(obj);
         }
+
+        public static async Task WriteAsync(this BinaryWriter Writer, byte[] buffer, CancellationToken Cancel = default)
+        {
+            if (buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
+            await Writer.BaseStream.WriteAsync(buffer, 0, buffer.Length, Cancel);
+        }
+
+        public static async Task WriteAsync(this BinaryWriter Writer, int value, CancellationToken Cancel = default) =>
+            await Writer.BaseStream.WriteAsync(
+                buffer: new[]
+                {
+                    (byte)value, 
+                    (byte)(value >> 8), 
+                    (byte)(value >> 16), 
+                    (byte)(value >> 24)
+                }, 
+                offset: 0, 
+                count: 4,
+                cancellationToken: Cancel);
+
+        public static async Task WriteAsync(this BinaryWriter Writer, short value, CancellationToken Cancel = default) =>
+            await Writer.BaseStream.WriteAsync(
+                buffer: new[]
+                {
+                    (byte)value,
+                    (byte) ((uint) value >> 8)
+                }, 
+                offset: 0, 
+                count: 2,
+                cancellationToken: Cancel);
     }
 }

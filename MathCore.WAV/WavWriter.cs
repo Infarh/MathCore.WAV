@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ConvertToAutoPropertyWhenPossible
 
 namespace MathCore.WAV
 {
-    public class WavFileWriter : IDisposable
+    public class WavFileWriter : IDisposable, IAsyncDisposable
     {
         private readonly Stream _DataStream;
 
@@ -97,6 +100,27 @@ namespace MathCore.WAV
             return (double)pos / _BlockAlign / _SampleRate;
         }
 
+        public ValueTask<double> WriteAsync(params long[] Values) => WriteAsync(CancellationToken.None, Values);
+        public async ValueTask<double> WriteAsync(CancellationToken Cancel, params long[] Values)
+        {
+            if (Values is null) throw new ArgumentNullException(nameof(Values));
+            if (Values.Length < _ChannelsCount)
+                throw new ArgumentException($"Число каналов в файле задано равным {_ChannelsCount}, а для записи передано {Values.Length} значений");
+            Cancel.ThrowIfCancellationRequested();
+
+            var byte_per_sample = _BitsPerSample >> 3;
+            if (byte_per_sample == 1 || byte_per_sample == 2 || byte_per_sample == 4 || byte_per_sample == 8)
+                for (var channel = 0; channel < _ChannelsCount; channel++)
+                    Buffer.BlockCopy(Values, channel << 3, _WriteBuffer, channel * byte_per_sample, byte_per_sample);
+            else
+                throw new ArgumentOutOfRangeException(nameof(_BitsPerSample), _BitsPerSample, "Поддерживается 8, 16, 32 и 64 бит на канал");
+
+            await _DataStream.WriteAsync(_WriteBuffer, 0, _BlockAlign, Cancel);
+
+            var pos = _DataStream.Length - Header.Length;
+            return (double)pos / _BlockAlign / _SampleRate;
+        }
+
         #region IDisposable
 
         public void Dispose()
@@ -105,7 +129,7 @@ namespace MathCore.WAV
             GC.SuppressFinalize(this);
         }
 
-        protected bool _Disposed;
+        private bool _Disposed;
         protected virtual void Dispose(bool disposing)
         {
             if (_Disposed || !disposing) return;
@@ -124,6 +148,25 @@ namespace MathCore.WAV
             {
                 using var writer = new BinaryWriter(_DataStream);
                 header.WriteTo(writer);
+            }
+        }
+
+        public virtual async ValueTask DisposeAsync()
+        {
+            if (_Disposed) return;
+            var header = new Header(
+                (int)_DataStream.Length,
+                _ChannelsCount,
+                _SampleRate,
+                _BlockAlign,
+                _BitsPerSample,
+                (int)_DataStream.Length - Header.Length);
+
+            _DataStream.Seek(0, SeekOrigin.Begin);
+            using (_DataStream)
+            {
+                using var writer = new BinaryWriter(_DataStream);
+                await header.WriteToAsync(writer);
             }
         }
 
