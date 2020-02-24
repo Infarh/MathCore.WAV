@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 // ReSharper disable ArgumentsStyleLiteral
@@ -83,6 +85,58 @@ namespace MathCore.WAV.Service
                 hash = unchecked((((hash * 397) ^ i) * 397) ^ array[i].GetHashCode());
 
             return hash;
+        }
+
+        public static IEnumerable<T[]> AsBlockEnumerable<T>(this IEnumerable<T>[] Series)
+        {
+            var series_length = Series.Length;
+            IEnumerator<T>[] enumerators = null;
+            try
+            {
+                enumerators = Series.Select(e => e.GetEnumerator()).ToArray();
+                while (enumerators.All(e => e.MoveNext()))
+                {
+                    var values = enumerators.Select(e => e.Current).ToArray();
+                    yield return values;
+                }
+            }
+            finally
+            {
+                if(enumerators != null)
+                    for (var i = 0; i < series_length; i++)
+                        try { enumerators[i]?.Dispose(); }
+                        catch
+                        {
+                            // ignored
+                        }
+            }
+        }
+
+        public static IEnumerable<T[]> AsBlockEnumerableWithSingleArray<T>(this IEnumerable<T>[] Series)
+        {
+            var series_length = Series.Length;
+            IEnumerator<T>[] enumerators = null;
+            try
+            {
+                enumerators = Series.Select(e => e.GetEnumerator()).ToArray();
+                var result = new T[series_length];
+                while (enumerators.All(e => e.MoveNext()))
+                {
+                    for (var i = 0; i < series_length; i++) 
+                        result[i] = enumerators[i].Current;
+                    yield return result;
+                }
+            }
+            finally
+            {
+                if (enumerators != null)
+                    for (var i = 0; i < series_length; i++)
+                        try { enumerators[i]?.Dispose(); }
+                        catch
+                        {
+                            // ignored
+                        }
+            }
         }
     }
 }
