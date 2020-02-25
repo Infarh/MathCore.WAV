@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 // ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBePrivate.Global
 namespace MathCore.WAV
 {
     /// <summary>Объект для чтения данных WAV в формате PCM</summary>
@@ -11,8 +12,24 @@ namespace MathCore.WAV
     {
         /* ------------------------------------------------------------------------------------- */
 
+        public static long ValueToSample(double Value, double Resolution) => (long)Math.Round(Value * Resolution);
+
+        public static long ValueToSample(decimal Value, decimal Resolution) => (long)Math.Round(Value * Resolution);
+
+        public static double SampleToValue(long Sample, double Resolution) => Sample * Resolution;
+
+        public static decimal SampleToValue(long Sample, decimal Resolution) => Sample * Resolution;
+
+        /* ------------------------------------------------------------------------------------- */
+
         /// <summary>Заголовок файла</summary>
         protected readonly Header _Header;
+
+        /// <summary>Смещение центра интервала физической величины</summary>
+        private double _ValuesOffset;
+
+        /// <summary>Амплитуда физической величины</summary>
+        private double _Amplitude = double.NaN;
 
         /* ------------------------------------------------------------------------------------- */
 
@@ -47,6 +64,38 @@ namespace MathCore.WAV
 
         /// <summary>Байт на один отсчёт</summary>
         public int SampleLength => _Header.BytesPerSample;
+
+        /// <summary>Смещение центра интервала физической величины</summary>
+        public double ValuesOffset
+        {
+            get => _ValuesOffset;
+            set
+            {
+                if (double.IsNaN(value) || double.IsInfinity(value))
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Некорректное значение смещения");
+                _ValuesOffset = value;
+            }
+        }
+
+        /// <summary>Амплитуда физической величины</summary>
+        public double Amplitude
+        {
+            get => _Amplitude;
+            set
+            {
+                if (value <= double.Epsilon)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Требуется положительное значение");
+
+                _Amplitude = value;
+            }
+        }
+
+        /// <summary>Амплитуда канала</summary>
+        public long ChannelAmplitude => (1 << (_Header.BitsPerSample - 1)) - 1;
+
+        public double ChannelResolution => _Amplitude / ChannelAmplitude;
+
+        public double AmplitudeResolution => ChannelAmplitude / _Amplitude;
 
         /// <summary>Индексатор фреймов</summary>
         /// <param name="i">Номер отсчёта в потоке</param>
@@ -112,6 +161,108 @@ namespace MathCore.WAV
                     _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
                 };
             }
+            return result;
+        }
+
+        public double[] GetChannelDouble(int Channel)
+        {
+            var channels_count = _Header.ChannelsCount;
+            if (Channel >= channels_count)
+                throw new ArgumentOutOfRangeException(nameof(Channel), Channel, $"В файле содержится {channels_count} каналов, а запрошен {Channel}");
+            using var data_stream = GetDataStream();
+
+            var sample_length = _Header.BlockAlign;
+            var sample_data = new byte[sample_length];
+
+            var data_length = _Header.FrameCount;
+            var result = new double[data_length];
+
+            var bytes_per_sample = _Header.BytesPerSample;
+            var resolution = ChannelResolution;
+            if (double.IsNaN(resolution))
+                for (var i = 0; i < data_length; i++)
+                {
+                    data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
+                    if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                        throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+                    var value = bytes_per_sample switch
+                    {
+                        1 => sample_data[Channel],
+                        2 => BitConverter.ToInt16(sample_data, Channel * bytes_per_sample),
+                        4 => BitConverter.ToInt32(sample_data, Channel * bytes_per_sample),
+                        8 => BitConverter.ToInt64(sample_data, Channel * bytes_per_sample),
+                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
+                    };
+                    result[i] = value;
+                    //result[i] = Wav.SampleToValue(value, )
+                }
+            else
+                for (var i = 0; i < data_length; i++)
+                {
+                    data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
+                    if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                        throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+                    var value = bytes_per_sample switch
+                    {
+                        1 => sample_data[Channel],
+                        2 => BitConverter.ToInt16(sample_data, Channel * bytes_per_sample),
+                        4 => BitConverter.ToInt32(sample_data, Channel * bytes_per_sample),
+                        8 => BitConverter.ToInt64(sample_data, Channel * bytes_per_sample),
+                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
+                    };
+                    result[i] = SampleToValue(value, resolution);
+                }
+            return result;
+        }
+
+        public decimal[] GetChannelDecimal(int Channel)
+        {
+            var channels_count = _Header.ChannelsCount;
+            if (Channel >= channels_count)
+                throw new ArgumentOutOfRangeException(nameof(Channel), Channel, $"В файле содержится {channels_count} каналов, а запрошен {Channel}");
+            using var data_stream = GetDataStream();
+
+            var sample_length = _Header.BlockAlign;
+            var sample_data = new byte[sample_length];
+
+            var data_length = _Header.FrameCount;
+            var result = new decimal[data_length];
+
+            var bytes_per_sample = _Header.BytesPerSample;
+            var channel_resolution = ChannelResolution;
+            var resolution = (decimal)channel_resolution;
+            if (double.IsNaN(channel_resolution))
+                for (var i = 0; i < data_length; i++)
+                {
+                    data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
+                    if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                        throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+                    var value = bytes_per_sample switch
+                    {
+                        1 => sample_data[Channel],
+                        2 => BitConverter.ToInt16(sample_data, Channel * bytes_per_sample),
+                        4 => BitConverter.ToInt32(sample_data, Channel * bytes_per_sample),
+                        8 => BitConverter.ToInt64(sample_data, Channel * bytes_per_sample),
+                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
+                    };
+                    result[i] = value;
+                }
+            else
+                for (var i = 0; i < data_length; i++)
+                {
+                    data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
+                    if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                        throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+                    var value = bytes_per_sample switch
+                    {
+                        1 => sample_data[Channel],
+                        2 => BitConverter.ToInt16(sample_data, Channel * bytes_per_sample),
+                        4 => BitConverter.ToInt32(sample_data, Channel * bytes_per_sample),
+                        8 => BitConverter.ToInt64(sample_data, Channel * bytes_per_sample),
+                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
+                    };
+                    result[i] = SampleToValue(value, resolution);
+                }
             return result;
         }
 

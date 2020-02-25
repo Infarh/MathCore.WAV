@@ -36,14 +36,11 @@ namespace MathCore.WAV
         /// <summary>Смещение центра интервала физической величины</summary>
         private double _ValuesOffset;
 
-        /// <summary>Интервал физической величины</summary>
-        private double _ValuesInterval = double.NaN;
-
         /// <summary>Буферный массив значений для записи вещественных значений</summary>
         private readonly long[] _ChannelValues;
 
-        /// <summary>Коэффициент преобразования нормированной амплитуды физического сигнала в целочисленные значения</summary>
-        private double _MaxLogicalSignalAmplitude = 10000;
+        /// <summary>Амплитуда физической величины</summary>
+        private double _Amplitude = double.NaN;
 
         /* ------------------------------------------------------------------------------------- */
 
@@ -64,44 +61,31 @@ namespace MathCore.WAV
             get => _ValuesOffset;
             set
             {
-                if(double.IsNaN(value) || double.IsInfinity(value))
+                if (double.IsNaN(value) || double.IsInfinity(value))
                     throw new ArgumentOutOfRangeException(nameof(value), value, "Некорректное значение смещения");
                 _ValuesOffset = value;
             }
         }
 
-        /// <summary>Интервал физической величины</summary>
-        public double ValuesInterval
+        /// <summary>Амплитуда физической величины</summary>
+        public double Amplitude
         {
-            get => _ValuesInterval;
+            get => _Amplitude;
             set
             {
-                if(Math.Abs(value) < double.Epsilon)
-                    throw new ArgumentOutOfRangeException(nameof(value), value, "Попытка задать нулевой интервал физической величины");
+                if (value <= double.Epsilon) 
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Требуется положительное значение");
 
-                if (double.IsInfinity(value))
-                    value = double.NaN;
-                _ValuesInterval = value;
-            }
-        }
-
-        public double MaxLogicalSignalAmplitude
-        {
-            get => _MaxLogicalSignalAmplitude;
-            set
-            {
-                if(double.IsNaN(value))
-                    throw new NaNArgumentValueException("Попытка указать нечисловое значение", nameof(value));
-                if(value <= double.Epsilon) throw new ArgumentOutOfRangeException(nameof(value), value, "Требуется положительное значение");
-
-                _MaxLogicalSignalAmplitude = value;
+                _Amplitude = value;
             }
         }
 
         /// <summary>Амплитуда канала</summary>
-        public long ChannelAmplitude => 1 >> (_BitsPerSample - 1);
+        public long ChannelAmplitude => (1 << (_BitsPerSample - 1)) - 1;
 
-        public double ChannelResolution => _MaxLogicalSignalAmplitude / _BitsPerSample;
+        public double ChannelResolution => _Amplitude / ChannelAmplitude;
+
+        public double AmplitudeResolution => ChannelAmplitude / _Amplitude;
 
         /* ------------------------------------------------------------------------------------- */
 
@@ -162,16 +146,20 @@ namespace MathCore.WAV
         /// <returns>Текущее значение времени записанных данных в секундах</returns>
         public double Write(params double[] Values)
         {
-            if(Values is null) throw new ArgumentNullException(nameof(Values));
-            if(Values.Length != _ChannelsCount)
+            if (Values is null) throw new ArgumentNullException(nameof(Values));
+            if (Values.Length != _ChannelsCount)
                 throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
 
-            if (double.IsNaN(_ValuesInterval) || _ValuesInterval.Equals(1d) && _ValuesOffset.Equals(0d))
+            var a = _Amplitude;
+            if (double.IsNaN(a))
                 for (var i = 0; i < _ChannelsCount; i++)
                     _ChannelValues[i] = (long)Math.Round(Values[i]);
             else
+            {
+                var k = AmplitudeResolution;
                 for (var i = 0; i < _ChannelsCount; i++)
-                    _ChannelValues[i] = (long)(Math.Round((Values[i] - _ValuesOffset) / _ValuesInterval) * _MaxLogicalSignalAmplitude);
+                    _ChannelValues[i] = Wav.ValueToSample(Math.Min(a, Math.Max(-a, Values[i])) - _ValuesOffset, k);
+            }
 
             return Write(_ChannelValues);
         }
@@ -185,12 +173,16 @@ namespace MathCore.WAV
             if (Values.Length != _ChannelsCount)
                 throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
 
-            if (double.IsNaN(_ValuesInterval) || _ValuesInterval.Equals(1d) && _ValuesOffset.Equals(0d))
+            if (double.IsNaN(_Amplitude))
                 for (var i = 0; i < _ChannelsCount; i++)
                     _ChannelValues[i] = (long)Math.Round(Values[i]);
             else
+            {
+                var a = (decimal)_Amplitude;
+                var k = (decimal)AmplitudeResolution;
                 for (var i = 0; i < _ChannelsCount; i++)
-                    _ChannelValues[i] = (long)(Math.Round((Values[i] - (decimal)_ValuesOffset) / (decimal)_ValuesInterval) * (decimal)_MaxLogicalSignalAmplitude);
+                    _ChannelValues[i] = Wav.ValueToSample(Math.Min(a, Math.Max(-a, Values[i])) - (decimal)_ValuesOffset, k);
+            }
 
             return Write(_ChannelValues);
         }
@@ -256,12 +248,12 @@ namespace MathCore.WAV
             if (Values.Length != _ChannelsCount)
                 throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
 
-            if (double.IsNaN(_ValuesInterval) || _ValuesInterval.Equals(1d) && _ValuesOffset.Equals(0d))
+            if (double.IsNaN(_Amplitude) || _Amplitude.Equals(1d) && _ValuesOffset.Equals(0d))
                 for (var i = 0; i < _ChannelsCount; i++)
                     _ChannelValues[i] = (long)Math.Round(Values[i]);
             else
                 for (var i = 0; i < _ChannelsCount; i++)
-                    _ChannelValues[i] = (long)(Math.Round((Values[i] - _ValuesOffset) / _ValuesInterval) * _MaxLogicalSignalAmplitude);
+                    _ChannelValues[i] = (long)(Math.Round((Values[i] - _ValuesOffset) / _Amplitude) * _Amplitude);
 
             return await WriteAsync(Cancel, _ChannelValues);
         }
@@ -281,12 +273,12 @@ namespace MathCore.WAV
             if (Values.Length != _ChannelsCount)
                 throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
 
-            if (double.IsNaN(_ValuesInterval) || _ValuesInterval.Equals(1d) && _ValuesOffset.Equals(0d))
+            if (double.IsNaN(_Amplitude) || _Amplitude.Equals(1d) && _ValuesOffset.Equals(0d))
                 for (var i = 0; i < _ChannelsCount; i++)
                     _ChannelValues[i] = (long)Math.Round(Values[i]);
             else
                 for (var i = 0; i < _ChannelsCount; i++)
-                    _ChannelValues[i] = (long)(Math.Round((Values[i] - (decimal)_ValuesOffset) / (decimal)_ValuesInterval) * (decimal)_MaxLogicalSignalAmplitude);
+                    _ChannelValues[i] = (long)(Math.Round((Values[i] - (decimal)_ValuesOffset) / (decimal)_Amplitude) * (decimal)_Amplitude);
 
             return await WriteAsync(Cancel, _ChannelValues);
         }
