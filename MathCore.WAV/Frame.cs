@@ -37,25 +37,15 @@ namespace MathCore.WAV
         /// <summary>Получение значения канала по его индексу в фрейме</summary>
         /// <param name="channel">Индекс канала</param>
         /// <exception cref="NotSupportedException">Если длина канала не равна 8, 16, 32, 64 бита</exception>
-        public long this[int channel]
-        {
-            get
+        public long this[int channel] =>
+            _BytesPerChannel switch
             {
-                switch (_BytesPerChannel)
-                {
-                    case 1:
-                        return _Data[channel];
-                    case 2:
-                        return BitConverter.ToInt16(_Data, channel * _BytesPerChannel);
-                    case 4:
-                        return BitConverter.ToInt32(_Data, channel * _BytesPerChannel);
-                    case 8:
-                        return BitConverter.ToInt64(_Data, channel * _BytesPerChannel);
-                    default:
-                        throw new NotSupportedException($"Размерность отсчёта {_BytesPerChannel} байт на канал не поддерживается");
-                }
-            }
-        }
+                1 => _Data[channel],
+                2 => BitConverter.ToInt16(_Data, channel * _BytesPerChannel),
+                4 => BitConverter.ToInt32(_Data, channel * _BytesPerChannel),
+                8 => BitConverter.ToInt64(_Data, channel * _BytesPerChannel),
+                _ => throw new NotSupportedException($"Размерность отсчёта {_BytesPerChannel} байт на канал не поддерживается"),
+            };
 
         /* ------------------------------------------------------------------------------------- */
 

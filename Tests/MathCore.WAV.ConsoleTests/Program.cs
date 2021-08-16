@@ -24,7 +24,7 @@ namespace MathCore.WAV.ConsoleTests
             Load(args, 2, ref max_time);
             Load(args, 3, ref max_a0);
 
-            double[] input_data = null;
+            double[] input_data;
             using (var test_wave = new WavFileWriter("test_data.wav") { Amplitude = max_a0 })
             {
                 double fd = test_wave.SampleRate;
