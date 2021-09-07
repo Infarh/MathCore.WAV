@@ -10,35 +10,51 @@ namespace MathCore.WAV.ConsoleTests
         private const string __TestDataFile = @"test.wav";
         private const string __TestDataFileSin100 = @"sin100.wav";
 
+        private static void Load(string[] args, int index, ref double value)
+        {
+            if (args?.Length > index && double.TryParse(args[index], out var v))
+                value = v;
+        }
+
         public static void Main(string[] args)
         {
             var max_time = 5d; // sec.
-            if (args?.Length > 2 && double.TryParse(args[2], out var max_time_value))
-                max_time = max_time_value;
-            using (var test_wave = new WavFileWriter("test_data.wav", 1))
+            var a0 = 5d;
+            var max_a0 = 5d;
+            Load(args, 2, ref max_time);
+            Load(args, 3, ref max_a0);
+
+            double[] input_data;
+            using (var test_wave = new WavFileWriter("test_data.wav") { Amplitude = max_a0 })
             {
                 double fd = test_wave.SampleRate;
                 var samples_count = (int)(max_time * fd);
+                input_data = new double[samples_count];
                 var dt = 1 / fd;
 
                 var f0 = 1e3;
-                if (args?.Length > 0 && double.TryParse(args[0], out var vf0))
-                    f0 = vf0;
+                Load(args, 0, ref f0);
                 var w0 = 2 * Math.PI * f0;
-                var a0 = 1000d;
-                if (args?.Length > 1 && double.TryParse(args[1], out var va0))
-                    a0 = va0;
+                Load(args, 1, ref a0);
 
-                Console.WriteLine("Generating sin wave with\r\n\tf0:{0}Hz\r\n\tA0:{1}\r\n\ttime:{2}sec.", f0, a0, max_time);
+                Console.WriteLine("Generating sin wave with\r\n\tf0:{0}Hz\r\n\tA0:{1}\r\n\tA0mx:{2}\r\n\ttime:{3}sec.", f0, a0, max_a0, max_time);
 
                 for (var i = 0; i < samples_count; i++)
-                    test_wave.Write((long)(a0 * Math.Sin(w0 * i * dt)));
+                    test_wave.Write(input_data[i] = a0 * Math.Cos(w0 * i * dt));
             }
 
             if (args != null && args.Contains("start", StringComparer.OrdinalIgnoreCase))
                 Process.Start(new ProcessStartInfo("test_data.wav") { UseShellExecute = true });
 
-            //var test = new WavFile("test_data.wav");
+            var test = new WavFile("test_data.wav") { Amplitude = max_a0 };
+            var test_data = test.GetChannelDouble(0);
+
+            var error = input_data.Zip(test_data, (x, y) => x - y).ToArray();
+
+            var e2 = error.Sum(e => e * e);
+
+            Console.ReadLine();
+
             //var td = test.GetChannel(0);
 
             //var sin = new WavFile(__TestDataPath + __TestDataFileSin100);

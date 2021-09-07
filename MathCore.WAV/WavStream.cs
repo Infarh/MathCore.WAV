@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
+// ReSharper disable UnusedType.Global
 
 namespace MathCore.WAV
 {

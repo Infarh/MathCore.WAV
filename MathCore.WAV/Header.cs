@@ -22,12 +22,12 @@ namespace MathCore.WAV
         /// <summary>Загрузить данные заголовка из объекта чтения двоичных данных</summary>
         /// <param name="reader">Объект чтения двоичных данных, осуществляющий доступ к источнику данных</param>
         /// <returns>Прочитанный заголовок</returns>
-        public static Header Load(BinaryReader reader) => new Header(reader);
+        public static Header Load(BinaryReader reader) => new(reader);
 
         /// <summary>Загрузить данные заголовка из объекта чтения двоичных данных</summary>
         /// <param name="stream">Поток байт данных в WAV-формате</param>
         /// <returns>Прочитанный заголовок</returns>
-        public static Header Load(Stream stream) => new Header(stream);
+        public static Header Load(Stream stream) => new(stream);
 
         /* ------------------------------------------------------------------------------------- */
 
