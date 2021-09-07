@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
 
       - name: Setup .NET 5.0.x
         uses: actions/setup-dotnet@v1
@@ -20,13 +20,13 @@ jobs:
           dotnet-version: 5.0.x
         
       - name: Building
-        run: dotnet build          
+        run: dotnet build --nologo
           
       - name: Testing
-        run: dotnet test
+        run: dotnet test --nologo
         
       - name: Packing
-        run: dotnet pack -c Release
+        run: dotnet pack -c Release --nologo
         
       - name: Publishing
-        run: dotnet nuget push MathCore.WAV/bin/Release/*.nupkg -k ${{ secrets.NuGetApiKey }} --skip-duplicate -s https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "**/*.nupkg" -k ${{ secrets.NuGetApiKey }} --skip-duplicate -s https://api.nuget.org/v3/index.json
