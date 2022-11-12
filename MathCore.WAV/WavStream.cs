@@ -35,8 +35,10 @@ namespace MathCore.WAV
 
                 var sample_data = new byte[sample_length];
                 _DataStream.Seek(data_offset, SeekOrigin.Begin);
+
                 if (_DataStream.Read(sample_data, 0, sample_length) != sample_length)
                     throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+
                 return new Frame(i / (double)_Header.SampleRate, _Header.ChannelsCount, sample_data);
             }
         }

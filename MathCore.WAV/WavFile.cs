@@ -37,7 +37,9 @@ namespace MathCore.WAV
         protected override Stream GetDataStream()
         {
             var stream = File.OpenRead();
-            stream.Seek(Header.Length, SeekOrigin.Begin);
+            var length = Header.Length;
+            if (stream.Seek(length, SeekOrigin.Begin) != length)
+                throw new InvalidOperationException($"Не удалось перейти в файле к смещению {length}");
             return stream;
         }
 
@@ -166,6 +168,7 @@ namespace MathCore.WAV
                 data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (await data_stream.ReadAsync(sample_data, 0, sample_length, Cancel) != sample_length)
                     yield break;
+
                 for (var channel = 0; channel < channels_count; channel++)
                     result[channel] = bytes_per_sample switch
                     {
@@ -199,6 +202,7 @@ namespace MathCore.WAV
                 data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
                     yield break;
+
                 for (var channel = 0; channel < channels_count; channel++)
                     result[channel] = bytes_per_sample switch
                     {
@@ -235,6 +239,7 @@ namespace MathCore.WAV
                 data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (await data_stream.ReadAsync(sample_data, 0, sample_length, Cancel) != sample_length)
                     yield break;
+
                 for (var channel = 0; channel < channels_count; channel++)
                     result[channel] = bytes_per_sample switch
                     {
