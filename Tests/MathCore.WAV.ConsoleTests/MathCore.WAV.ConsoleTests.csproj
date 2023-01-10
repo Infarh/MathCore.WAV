@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +12,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\MathCore.WAV\MathCore.WAV.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Diagnostics" />
+    <Using Include="MathCore.WAV.ConsoleTests" />
   </ItemGroup>
 
 </Project>
