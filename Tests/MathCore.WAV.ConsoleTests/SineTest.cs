@@ -33,7 +33,14 @@ public static class SineTest
             var w0 = 2 * Math.PI * f0;
             Load(args, 1, ref a0);
 
-            Console.WriteLine("Generating sin wave with\r\n\tf0:{0}Hz\r\n\tA0:{1}\r\n\tA0mx:{2}\r\n\ttime:{3}sec.", f0, a0, max_a0, max_time);
+            Console.WriteLine("""
+                Generating sin wave with
+                      f0 : {0}Hz
+                      A0 : {1}
+                    A0max: {2}
+                     time: {3}sec.
+                """, 
+                f0, a0, max_a0, max_time);
 
             for (var i = 0; i < samples_count; i++)
                 test_wave.Write(input_data[i] = a0 * Math.Cos(w0 * i * dt));
