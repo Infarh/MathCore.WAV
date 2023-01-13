@@ -59,7 +59,7 @@ public class WavStream : Wav, IDisposable
     /// Иначе возвращается <see cref="_DataStream"/>
     /// </summary>
     /// <returns>Поток для чтения данных</returns>
-    protected override Stream GetDataStream()
+    public override Stream GetDataStream()
     {
         if (_DataStream is FileStream file)
             return new FileStream(file.Name, FileMode.Open);

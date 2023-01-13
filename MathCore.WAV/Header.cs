@@ -113,7 +113,7 @@ public readonly struct Header : IEquatable<Header>
     public int BytesPerSample => _BitsPerSample >> 3;
 
     /// <summary>Количество байт области данных</summary>
-    public int SubChunk2Size => _SubChunk2Size;
+    public int SubChunk2Size { get => _SubChunk2Size; internal init => _SubChunk2Size = value; }
 
     /// <summary>Длина файла в секундах</summary>
     public double TimeLengthInSeconds => (double)_SubChunk2Size / _ByteRate;

@@ -38,7 +38,7 @@ public abstract class Wav
     public int BytesPerSample => _Header.BytesPerSample;
 
     /// <summary>Количество бит в семпле (8, 16, 32, 64...)</summary>
-    public int BitsPerSample => _Header.BitsPerSample;
+    public short BitsPerSample => _Header.BitsPerSample;
 
     /// <summary>Количество байт на один фрейм (один отсчёт по всем каналам)</summary>
     public short FrameLength => _Header.BlockAlign;
@@ -47,12 +47,12 @@ public abstract class Wav
     public long FramesCount => _Header.FrameCount;
 
     /// <summary>Период дискретизации</summary>
-#pragma warning disable IDE1006 // Стили именования
     public double dt => 1d / _Header.SampleRate;
-#pragma warning restore IDE1006 // Стили именования
 
     /// <summary>Длина файла в секундах</summary>
     public double FileTimeLength => _Header.TimeLengthInSeconds;
+
+    public TimeSpan FileTime => TimeSpan.FromSeconds(FileTimeLength);
 
     /// <summary>Количество каналов</summary>
     public int ChannelsCount => _Header.ChannelsCount;
@@ -123,7 +123,7 @@ public abstract class Wav
 
     /// <summary>Получить поток байт данных для осуществления процедуры чтения</summary>
     /// <returns>Поток байт данных WAV</returns>
-    protected abstract Stream GetDataStream();
+    public abstract Stream GetDataStream();
 
     /// <summary>Прочитать все значения отсчётов канала</summary>
     /// <param name="Channel">Номер канала</param>

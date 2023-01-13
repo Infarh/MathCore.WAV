@@ -1,4 +1,5 @@
-﻿using MathCore.WAV.Exceptions;
+﻿#nullable enable
+using MathCore.WAV.Exceptions;
 
 // ReSharper disable UnusedMethodReturnValue.Global
 
@@ -81,6 +82,14 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public double AmplitudeResolution => ChannelAmplitude / _Amplitude;
 
+    public Header Header => new(
+        (int)_DataStream.Length,
+        _ChannelsCount,
+        _SampleRate,
+        _BlockAlign,
+        _BitsPerSample,
+        (int)_DataStream.Length - Header.Length);
+
     /* ------------------------------------------------------------------------------------- */
 
     /// <summary>Инициализация нового экземпляра <see cref="WavFileWriter"/></summary>
@@ -89,12 +98,25 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     /// <param name="SampleRate">Частота дискретизации в Гц (по умолчанию 44'100 Гц, или 44,1кГц)</param>
     /// <param name="BitsPerSample">Число бит на канал (по умолчанию 16 бит на канал)</param>
     public WavFileWriter(string FileName, short ChannelsCount = 1, int SampleRate = 44100, short BitsPerSample = 16)
+        : this(
+            new FileInfo(FileName ?? throw new ArgumentNullException(nameof(FileName))), 
+            ChannelsCount, SampleRate, BitsPerSample)
     {
-        if (string.IsNullOrWhiteSpace(FileName)) throw new ArgumentException($"Некорректное имя файла: {FileName ?? "<null>"}", nameof(FileName));
+
+    }
+
+    /// <summary>Инициализация нового экземпляра <see cref="WavFileWriter"/></summary>
+    /// <param name="file">Файл записи данных</param>
+    /// <param name="ChannelsCount">Число каналов (по умолчанию 1)</param>
+    /// <param name="SampleRate">Частота дискретизации в Гц (по умолчанию 44'100 Гц, или 44,1кГц)</param>
+    /// <param name="BitsPerSample">Число бит на канал (по умолчанию 16 бит на канал)</param>
+    public WavFileWriter(FileInfo file, short ChannelsCount = 1, int SampleRate = 44100, short BitsPerSample = 16)
+    {
+        if (file is null) throw new ArgumentNullException(nameof(file));
         if (ChannelsCount <= 0) throw new ArgumentOutOfRangeException(nameof(ChannelsCount), "Число каналов должно быть больше 0");
         if (BitsPerSample <= 0) throw new ArgumentOutOfRangeException(nameof(BitsPerSample), "Число бит на канал должно быть больше 0");
 
-        if(BitsPerSample is not 8 or 16 or 32 or 64)
+        if(BitsPerSample is not (8 or 16 or 32 or 64))
             throw new ArgumentOutOfRangeException(nameof(BitsPerSample), BitsPerSample, "Поддерживается 8, 16, 32 и 64 бит на канал");
 
         _ChannelsCount = ChannelsCount;
@@ -105,12 +127,27 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
         _WriteBuffer   = new byte[_BlockAlign];
         _ChannelValues = new long[_ChannelsCount];
 
-        _DataStream = File.Create(FileName);
+        _DataStream = file.Create();
         var header_bytes = new byte[Header.Length];
         _DataStream.Write(header_bytes, 0, header_bytes.Length);
     }
 
     /* ------------------------------------------------------------------------------------- */
+
+    /// <summary>Записать вещественные значения в поток</summary>
+    /// <param name="Values">Массив значений каналов, записываемых данных</param>
+    /// <returns>Текущее значение времени записанных данных в секундах</returns>
+    public double Write(params short[] Values)
+    {
+        if (Values is null) throw new ArgumentNullException(nameof(Values));
+        if (Values.Length != _ChannelsCount)
+            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+
+        for (var i = 0; i < _ChannelsCount; i++)
+            _ChannelValues[i] = Values[i];
+
+        return Write(_ChannelValues);
+    }
 
     /// <summary>Записать вещественные значения в поток</summary>
     /// <param name="Values">Массив значений каналов, записываемых данных</param>
@@ -412,49 +449,44 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     }
 
     /// <summary>Признак того, что файл был закрыт</summary>
-    private bool _Disposed;
+    private int _Disposed;
 
     /// <summary>Выполняет запись заголовка файла (обновление данных о параметрах)</summary>
     /// <param name="disposing">Выполнить освобождение ресурсов</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (_Disposed || !disposing) return;
-        _Disposed = true;
+        if (!disposing) return;
+        if(Interlocked.Exchange(ref _Disposed, 1) == 1) return;
 
-        var header = new Header(
-            (int)_DataStream.Length,
-            _ChannelsCount,
-            _SampleRate,
-            _BlockAlign,
-            _BitsPerSample,
-            (int)_DataStream.Length - Header.Length);
+        //var header = new Header(
+        //    (int)_DataStream.Length,
+        //    _ChannelsCount,
+        //    _SampleRate,
+        //    _BlockAlign,
+        //    _BitsPerSample,
+        //    (int)_DataStream.Length - Header.Length);
 
         _DataStream.Seek(0, SeekOrigin.Begin);
-        using (_DataStream)
-        {
-            using var writer = new BinaryWriter(_DataStream);
-            header.WriteTo(writer);
-        }
+        using (_DataStream) 
+            Header.WriteTo(new BinaryWriter(_DataStream));
     }
 
     /// <summary>Выполняет процедуру асинхронной записи заголовка файла (обновление данных о параметрах)</summary>
     public virtual async ValueTask DisposeAsync()
     {
-        if (_Disposed) return;
-        var header = new Header(
-            (int)_DataStream.Length,
-            _ChannelsCount,
-            _SampleRate,
-            _BlockAlign,
-            _BitsPerSample,
-            (int)_DataStream.Length - Header.Length);
+        if(Interlocked.Exchange(ref _Disposed, 1) == 1) return;
+
+        //var header = new Header(
+        //    (int)_DataStream.Length,
+        //    _ChannelsCount,
+        //    _SampleRate,
+        //    _BlockAlign,
+        //    _BitsPerSample,
+        //    (int)_DataStream.Length - Header.Length);
 
         _DataStream.Seek(0, SeekOrigin.Begin);
-        using (_DataStream)
-        {
-            using var writer = new BinaryWriter(_DataStream);
-            await header.WriteToAsync(writer);
-        }
+        using (_DataStream) 
+            await Header.WriteToAsync(new BinaryWriter(_DataStream));
     }
 
     #endregion

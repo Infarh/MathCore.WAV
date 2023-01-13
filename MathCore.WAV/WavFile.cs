@@ -7,7 +7,7 @@
 namespace MathCore.WAV;
 
 /// <summary>Объект для чтения wav-файла в формате PCM</summary>
-public class WavFile : Wav
+public partial class WavFile : Wav
 {
     /* ------------------------------------------------------------------------------------- */
 
@@ -29,7 +29,7 @@ public class WavFile : Wav
 
     /// <summary>Открывает файловый поток и переходит к 44 байту (началу блока данных)</summary>
     /// <returns>Файловый поток для чтения данных</returns>
-    protected override Stream GetDataStream()
+    public override Stream GetDataStream()
     {
         var       stream = File.OpenRead();
         const int length = Header.Length;
