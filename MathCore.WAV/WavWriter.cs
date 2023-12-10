@@ -47,6 +47,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     /// <summary>Период дискретизации</summary>
 #pragma warning disable IDE1006 // Стили именования
+    // ReSharper disable once InconsistentNaming
     public double dt => 1d / _SampleRate;
 #pragma warning restore IDE1006 // Стили именования
 
@@ -357,7 +358,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<long>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<long>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<long>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)
@@ -378,7 +379,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<int>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<int>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<int>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)
@@ -399,7 +400,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<double>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<double>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<double>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)
@@ -420,7 +421,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<decimal>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<decimal>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<decimal>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)

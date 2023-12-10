@@ -5,38 +5,38 @@ internal static class StreamEx
     public static int FeelBuffer(this Stream stream, byte[] buffer)
     {
         var length = buffer.Length;
-        var readed = stream.Read(buffer, 0, length);
-        if (readed == length)
-            return readed;
+        var bytes_count = stream.Read(buffer, 0, length);
+        if (bytes_count == length)
+            return bytes_count;
 
-        while (readed < buffer.Length)
+        while (bytes_count < buffer.Length)
         {
-            var r2 = stream.Read(buffer, readed, length - readed);
-            if (r2 == 0)
-                return readed;
+            var count = stream.Read(buffer, bytes_count, length - bytes_count);
+            if (count == 0)
+                return bytes_count;
 
-            readed += r2;
+            bytes_count += count;
         }
 
-        return readed;
+        return bytes_count;
     }
 
     public static async Task<int> FeelBufferAsync(this Stream stream, byte[] buffer, CancellationToken Cancel = default)
     {
         var length = buffer.Length;
-        var readed = await stream.ReadAsync(buffer, 0, length, Cancel).ConfigureAwait(false);
-        if (readed == length)
-            return readed;
+        var bytes_count = await stream.ReadAsync(buffer, 0, length, Cancel).ConfigureAwait(false);
+        if (bytes_count == length)
+            return bytes_count;
 
-        while (readed < buffer.Length)
+        while (bytes_count < buffer.Length)
         {
-            var r2 = await stream.ReadAsync(buffer, readed, length - readed, Cancel).ConfigureAwait(false);
-            if (r2 == 0)
-                return readed;
+            var count = await stream.ReadAsync(buffer, bytes_count, length - bytes_count, Cancel).ConfigureAwait(false);
+            if (count == 0)
+                return bytes_count;
 
-            readed += r2;
+            bytes_count += count;
         }
 
-        return readed;
+        return bytes_count;
     }
 }

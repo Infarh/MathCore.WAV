@@ -1,18 +1,22 @@
-﻿using System.Runtime.CompilerServices;
+﻿#nullable enable
+using System.Runtime.CompilerServices;
 
 // ReSharper disable UnusedType.Global
 namespace MathCore.WAV;
 
 /// <summary>Объект чтения данных WAV в формате PCM из потока</summary>
-public class WavStream : Wav, IDisposable
+/// <remarks>Инициализация нового экземпляра <see cref="WavStream"/></remarks>
+/// <param name="DataStream">Поток байт данных, из которого требуется выполнять чтение</param>
+/// <param name="LeaveOpen">Признак того, что при вызове метода <see cref="Dispose()"/> поток <paramref name="DataStream"/> закрывать не требуется</param>
+public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.Load(DataStream ?? throw new ArgumentNullException(nameof(DataStream)))), IDisposable
 {
     /* ------------------------------------------------------------------------------------- */
 
     /// <summary>Поток байт данных, из которого требуется выполнять чтение</summary>
-    private readonly Stream _DataStream;
+    private readonly Stream _DataStream = DataStream;
 
     /// <summary>Признак того, что при вызове метода <see cref="Dispose()"/> поток <see cref="_DataStream"/> закрывать не требуется</summary>
-    private readonly bool _LeaveOpen;
+    private readonly bool _LeaveOpen = LeaveOpen;
 
     /* ------------------------------------------------------------------------------------- */
 
@@ -41,18 +45,6 @@ public class WavStream : Wav, IDisposable
 
     /* ------------------------------------------------------------------------------------- */
 
-    /// <summary>Инициализация нового экземпляра <see cref="WavStream"/></summary>
-    /// <param name="DataStream">Поток байт данных, из которого требуется выполнять чтение</param>
-    /// <param name="LeaveOpen">Признак того, что при вызове метода <see cref="Dispose()"/> поток <paramref name="DataStream"/> закрывать не требуется</param>
-    public WavStream(Stream DataStream, bool LeaveOpen = false)
-        : base(Header.Load(DataStream ?? throw new ArgumentNullException(nameof(DataStream))))
-    {
-        _DataStream = DataStream;
-        _LeaveOpen  = LeaveOpen;
-    }
-
-    /* ------------------------------------------------------------------------------------- */
-
     /// <summary>
     /// Если поток является файловым, то файл открывается вновь.
     /// Если в потоке можно выполнять перемещение, то положение в потоке изменяется на 44 байт (конец заголовка).
@@ -73,7 +65,7 @@ public class WavStream : Wav, IDisposable
     /// <inheritdoc />
     public override IEnumerable<(double Time, long Value)> EnumerateSamples(int Channel)
     {
-        Stream data_stream = null;
+        Stream? data_stream = null;
         try
         {
             data_stream = GetDataStream();
@@ -117,11 +109,11 @@ public class WavStream : Wav, IDisposable
     /// <inheritdoc />
     public override async IAsyncEnumerable<(double Time, long Value)> EnumerateSamplesAsync(
         int Channel,
-        IProgress<double> Progress = null,
+        IProgress<double>? Progress = null,
         [EnumeratorCancellation] CancellationToken Cancel = default)
     {
         Cancel.ThrowIfCancellationRequested();
-        Stream data_stream = null;
+        Stream? data_stream = null;
         try
         {
             data_stream = GetDataStream();
@@ -167,7 +159,7 @@ public class WavStream : Wav, IDisposable
     /// <inheritdoc />
     public override IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamples()
     {
-        Stream data_stream = null;
+        Stream? data_stream = null;
         try
         {
             data_stream = GetDataStream();
@@ -210,11 +202,11 @@ public class WavStream : Wav, IDisposable
 
     /// <inheritdoc />
     public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesAsync(
-        IProgress<double> Progress = null,
+        IProgress<double>? Progress = null,
         [EnumeratorCancellation] CancellationToken Cancel = default)
     {
         Cancel.ThrowIfCancellationRequested();
-        Stream data_stream = null;
+        Stream? data_stream = null;
         try
         {
             data_stream = GetDataStream();
@@ -260,7 +252,7 @@ public class WavStream : Wav, IDisposable
     /// <inheritdoc />
     public override IEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArray()
     {
-        Stream data_stream = null;
+        Stream? data_stream = null;
         try
         {
             data_stream = GetDataStream();
@@ -303,11 +295,11 @@ public class WavStream : Wav, IDisposable
 
     /// <inheritdoc />
     public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArrayAsync(
-        IProgress<double> Progress = null,
+        IProgress<double>? Progress = null,
         [EnumeratorCancellation] CancellationToken Cancel = default)
     {
         Cancel.ThrowIfCancellationRequested();
-        Stream data_stream = null;
+        Stream? data_stream = null;
         try
         {
             data_stream = GetDataStream();
