@@ -7,8 +7,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.0.3</Version>
-    <PackageReleaseNotes>Публикация пакета</PackageReleaseNotes>
+    <Version>0.0.1</Version>
+    <PackageReleaseNotes>
+      Добавлена возможность записи сырых данных в поток Wav-файла
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -32,7 +34,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

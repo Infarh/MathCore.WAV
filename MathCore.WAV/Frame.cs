@@ -7,22 +7,26 @@
 namespace MathCore.WAV;
 
 /// <summary>Фрейм, представляющий массив байт данных в единицу времени файла</summary>
+/// <remarks>Инициализация нового экземпляра <see cref="Frame"/></remarks>
+/// <param name="Time">Значение времени отсчёта</param>
+/// <param name="ChannelsCount">Число каналов</param>
+/// <param name="data">Массив байт данных фрейма</param>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly struct Frame : IEquatable<Frame>
+public readonly struct Frame(double Time, int ChannelsCount, byte[] data) : IEquatable<Frame>
 {
     /* ------------------------------------------------------------------------------------- */
 
     /// <summary>Значение времени отсчёта</summary>
-    private readonly double _Time;
+    private readonly double _Time = Time;
 
     /// <summary>Число каналов</summary>
-    private readonly int _ChannelsCount;
+    private readonly int _ChannelsCount = ChannelsCount;
 
     /// <summary>Массив байт данных фрейма</summary>
-    private readonly byte[] _Data;
+    private readonly byte[] _Data = data;
 
     /// <summary>Число байт на один канал</summary>
-    private readonly int _BytesPerChannel;
+    private readonly int _BytesPerChannel = data.Length / ChannelsCount;
 
     /* ------------------------------------------------------------------------------------- */
 
@@ -47,35 +51,21 @@ public readonly struct Frame : IEquatable<Frame>
 
     /* ------------------------------------------------------------------------------------- */
 
-    /// <summary>Инициализация нового экземпляра <see cref="Frame"/></summary>
-    /// <param name="Time">Значение времени отсчёта</param>
-    /// <param name="ChannelsCount">Число каналов</param>
-    /// <param name="data">Массив байт данных фрейма</param>
-    public Frame(double Time, int ChannelsCount, byte[] data)
-    {
-        _Time            = Time;
-        _ChannelsCount   = ChannelsCount;
-        _Data            = data;
-        _BytesPerChannel = _Data.Length / _ChannelsCount;
-    }
-
-    /* ------------------------------------------------------------------------------------- */
-
     /// <inheritdoc />
     public override string ToString()
     {
-        var data = new long[_ChannelsCount];
+        var channels = new long[_ChannelsCount];
         for (var i = 0; i < _ChannelsCount; i++)
-            data[i] = this[i];
+            channels[i] = this[i];
 
-        return $"{TimeSpan.FromSeconds(Time)}#{string.Join("|", data)}";
+        return $"{TimeSpan.FromSeconds(Time)}#{string.Join("|", channels)}";
     }
 
     /// <inheritdoc />
     public bool Equals(Frame other) =>
         _Time.Equals(other._Time)
         && _ChannelsCount == other._ChannelsCount
-        && Equals(_Data, other._Data)
+        && ReferenceEquals(_Data, other._Data)
         && _BytesPerChannel == other._BytesPerChannel;
 
     /// <inheritdoc />
