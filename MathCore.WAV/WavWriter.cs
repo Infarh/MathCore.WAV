@@ -438,6 +438,15 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
         }
     }
 
+    public void WriteRaw(byte[] buffer, int offset, int count) => _DataStream.Write(buffer, offset, count);
+
+    public void WriteRaw(byte[] buffer) => WriteRaw(buffer, 0, buffer.Length);
+
+    public async Task WriteRawAsync(byte[] buffer, int offset, int count, CancellationToken Cancel = default) =>
+        await _DataStream.WriteAsync(buffer, offset, count, Cancel).ConfigureAwait(false);
+
+    public Task WriteRawAsync(byte[] buffer, CancellationToken Cancel = default) => WriteRawAsync(buffer, 0, buffer.Length, Cancel);
+
     /* ------------------------------------------------------------------------------------- */
 
     #region IDisposable
@@ -469,7 +478,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
         _DataStream.Seek(0, SeekOrigin.Begin);
         using (_DataStream) 
-            Header.WriteTo(new BinaryWriter(_DataStream));
+            Header.WriteTo(new(_DataStream));
     }
 
     /// <summary>Выполняет процедуру асинхронной записи заголовка файла (обновление данных о параметрах)</summary>
@@ -487,7 +496,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
         _DataStream.Seek(0, SeekOrigin.Begin);
         using (_DataStream) 
-            await Header.WriteToAsync(new BinaryWriter(_DataStream));
+            await Header.WriteToAsync(new(_DataStream));
     }
 
     #endregion

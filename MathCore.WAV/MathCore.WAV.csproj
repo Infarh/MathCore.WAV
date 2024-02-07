@@ -7,8 +7,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.0.3</Version>
-    <PackageReleaseNotes>Публикация пакета</PackageReleaseNotes>
+    <Version>0.0.1</Version>
+    <PackageReleaseNotes>
+      Добавлена возможность записи сырых данных в поток Wav-файла
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup>
