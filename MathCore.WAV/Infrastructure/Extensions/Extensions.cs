@@ -87,6 +87,7 @@ internal static class Extensions
         IEnumerator<T>[] enumerators = null;
         try
         {
+            // ReSharper disable once NotDisposedResourceIsReturned
             enumerators = Series.Select(e => e.GetEnumerator()).ToArray();
             while (enumerators.All(e => e.MoveNext()))
             {
@@ -112,6 +113,7 @@ internal static class Extensions
         IEnumerator<T>[] enumerators = null;
         try
         {
+            // ReSharper disable once NotDisposedResourceIsReturned
             enumerators = Series.Select(e => e.GetEnumerator()).ToArray();
             var result = new T[series_length];
             while (enumerators.All(e => e.MoveNext()))

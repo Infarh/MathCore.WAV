@@ -48,6 +48,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     /// <summary>Период дискретизации</summary>
 #pragma warning disable IDE1006 // Стили именования
+    // ReSharper disable once InconsistentNaming
     public double dt => 1d / _SampleRate;
 #pragma warning restore IDE1006 // Стили именования
 
@@ -358,7 +359,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<long>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<long>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<long>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)
@@ -379,7 +380,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<int>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<int>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<int>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)
@@ -400,7 +401,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<double>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<double>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<double>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)
@@ -421,7 +422,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     public Task WriteAsync(CancellationToken Cancel, params IEnumerable<decimal>[] Signals) => WriteAsync(null, Cancel, Signals);
 
-    public async Task WriteAsync(IProgress<long> Progress, CancellationToken Cancel, params IEnumerable<decimal>[] Signals)
+    public async Task WriteAsync(IProgress<long>? Progress, CancellationToken Cancel, params IEnumerable<decimal>[] Signals)
     {
         Cancel.ThrowIfCancellationRequested();
         if (Progress is null)
@@ -437,6 +438,15 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
             }
         }
     }
+
+    public void WriteRaw(byte[] buffer, int offset, int count) => _DataStream.Write(buffer, offset, count);
+
+    public void WriteRaw(byte[] buffer) => WriteRaw(buffer, 0, buffer.Length);
+
+    public async Task WriteRawAsync(byte[] buffer, int offset, int count, CancellationToken Cancel = default) =>
+        await _DataStream.WriteAsync(buffer, offset, count, Cancel).ConfigureAwait(false);
+
+    public Task WriteRawAsync(byte[] buffer, CancellationToken Cancel = default) => WriteRawAsync(buffer, 0, buffer.Length, Cancel);
 
     public Stream GetDataStream() => new WriteOnlyStreamWrapper(_DataStream);
 
@@ -473,7 +483,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
         _DataStream.Seek(0, SeekOrigin.Begin);
         using (_DataStream) 
-            Header.WriteTo(new BinaryWriter(_DataStream));
+            Header.WriteTo(new(_DataStream));
     }
 
     /// <summary>Выполняет процедуру асинхронной записи заголовка файла (обновление данных о параметрах)</summary>
@@ -491,7 +501,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
         _DataStream.Seek(0, SeekOrigin.Begin);
         using (_DataStream) 
-            await Header.WriteToAsync(new BinaryWriter(_DataStream));
+            await Header.WriteToAsync(new(_DataStream));
     }
 
     #endregion

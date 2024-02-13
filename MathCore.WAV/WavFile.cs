@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿#nullable enable
+using System.Runtime.CompilerServices;
 
 // ReSharper disable UnusedType.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -7,26 +8,24 @@
 namespace MathCore.WAV;
 
 /// <summary>Объект для чтения wav-файла в формате PCM</summary>
-public partial class WavFile : Wav
+/// <remarks>Инициализация нового экземпляра <see cref="WavFile"/></remarks>
+/// <param name="File">файл данных для чтения</param>
+public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.Load))
 {
+    /// <summary>Инициализация нового экземпляра <see cref="WavFile"/></summary>
+    /// <param name="FileName">Имя файла с данными для чтения</param>
+    public WavFile(string FileName) : this(new FileInfo(FileName ?? throw new ArgumentNullException(nameof(FileName)))) { }
+
     /* ------------------------------------------------------------------------------------- */
 
     /// <summary>Читаемый файл данных</summary>
-    public FileInfo File { get; }
+    public FileInfo File { get; } = File;
 
     /// <summary>Длина файла</summary>
     public long FullLength => File.Length;
 
     /* ------------------------------------------------------------------------------------- */
-
-    /// <summary>Инициализация нового экземпляра <see cref="WavFile"/></summary>
-    /// <param name="FileName">Имя файла с данными для чтения</param>
-    public WavFile(string FileName) : this(new FileInfo(FileName ?? throw new ArgumentNullException(nameof(FileName)))) { }
-
-    /// <summary>Инициализация нового экземпляра <see cref="WavFile"/></summary>
-    /// <param name="File">файл данных для чтения</param>
-    public WavFile(FileInfo File) : base(File.OpenRead().Using(Header.Load)) => this.File = File;
-
+    
     /// <summary>Открывает файловый поток и переходит к 44 байту (началу блока данных)</summary>
     /// <returns>Файловый поток для чтения данных</returns>
     public override Stream GetDataStream()
@@ -76,7 +75,7 @@ public partial class WavFile : Wav
     /// <inheritdoc />
     public override async IAsyncEnumerable<(double Time, long Value)> EnumerateSamplesAsync(
         int Channel,
-        IProgress<double> Progress = null,
+        IProgress<double>? Progress = null,
         [EnumeratorCancellation] CancellationToken Cancel = default)
     {
         Cancel.ThrowIfCancellationRequested();
