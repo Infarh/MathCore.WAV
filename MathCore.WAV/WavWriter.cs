@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using MathCore.WAV.Exceptions;
+using MathCore.WAV.Infrastructure;
 
 // ReSharper disable UnusedMethodReturnValue.Global
 
@@ -446,6 +447,10 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
         await _DataStream.WriteAsync(buffer, offset, count, Cancel).ConfigureAwait(false);
 
     public Task WriteRawAsync(byte[] buffer, CancellationToken Cancel = default) => WriteRawAsync(buffer, 0, buffer.Length, Cancel);
+
+    public Stream GetDataStream() => new WriteOnlyStreamWrapper(_DataStream);
+
+    public BinaryWriter GetWriter() => new(GetDataStream(), System.Text.Encoding.UTF8, true);
 
     /* ------------------------------------------------------------------------------------- */
 

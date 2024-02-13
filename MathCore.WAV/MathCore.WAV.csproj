@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <PackageReleaseNotes>
-      Добавлена возможность записи сырых данных в поток Wav-файла
+      В класс WavWritter добавлены методы для доступа к потоку байт напрямую
     </PackageReleaseNotes>
   </PropertyGroup>
 
