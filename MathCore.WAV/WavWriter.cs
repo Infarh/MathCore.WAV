@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using MathCore.WAV.Exceptions;
+using MathCore.WAV.Infrastructure;
 
 // ReSharper disable UnusedMethodReturnValue.Global
 
@@ -436,6 +437,10 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
             }
         }
     }
+
+    public Stream GetDataStream() => new WriteOnlyStreamWrapper(_DataStream);
+
+    public BinaryWriter GetWriter() => new(GetDataStream(), System.Text.Encoding.UTF8, true);
 
     /* ------------------------------------------------------------------------------------- */
 

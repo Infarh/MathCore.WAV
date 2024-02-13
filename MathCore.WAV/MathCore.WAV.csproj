@@ -7,8 +7,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.0.3</Version>
-    <PackageReleaseNotes>Публикация пакета</PackageReleaseNotes>
+    <Version>0.0.1</Version>
+    <PackageReleaseNotes>
+      В класс WavWritter добавлены методы для доступа к потоку байт напрямую
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup>
