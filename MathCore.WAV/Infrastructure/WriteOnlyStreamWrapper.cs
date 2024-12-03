@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MathCore.WAV.Infrastructure;
 
-namespace MathCore.WAV.Infrastructure;
-
+/// <summary>
+/// Обертка для потока, поддерживающая только запись данных.
+/// </summary>
 public class WriteOnlyStreamWrapper(Stream DataStream) : Stream
 {
     public override bool CanRead => false;

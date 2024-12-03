@@ -150,7 +150,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
 
     /// <inheritdoc />
     public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesAsync(
-        IProgress<double> Progress = null,
+        IProgress<double>? Progress = null,
         [EnumeratorCancellation] CancellationToken Cancel = default)
     {
         Cancel.ThrowIfCancellationRequested();
@@ -225,7 +225,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
 
     /// <inheritdoc />
     public override async IAsyncEnumerable<(double Time, IReadOnlyList<long> Values)> EnumerateSamplesWithSingleArrayAsync(
-        IProgress<double> Progress = null,
+        IProgress<double>? Progress = null,
         [EnumeratorCancellation] CancellationToken Cancel = default)
     {
         Cancel.ThrowIfCancellationRequested();

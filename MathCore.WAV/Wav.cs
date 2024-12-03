@@ -20,12 +20,6 @@ public abstract class Wav
     /// <summary>Заголовок файла</summary>
     protected readonly Header _Header;
 
-    /// <summary>Смещение центра интервала физической величины</summary>
-    private double _ValuesOffset;
-
-    /// <summary>Амплитуда физической величины</summary>
-    private double _Amplitude = double.NaN;
-
     /* ------------------------------------------------------------------------------------- */
 
     /// <summary>Полная длина файла в байтах включая заголовок</summary>
@@ -63,34 +57,33 @@ public abstract class Wav
     /// <summary>Смещение центра интервала физической величины</summary>
     public double ValuesOffset
     {
-        get => _ValuesOffset;
+        get;
         set
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Некорректное значение смещения");
-            _ValuesOffset = value;
+            field = value;
         }
     }
 
     /// <summary>Амплитуда физической величины</summary>
     public double Amplitude
     {
-        get => _Amplitude;
+        get;
         set
         {
             if (value <= double.Epsilon)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Требуется положительное значение");
-
-            _Amplitude = value;
+            field = value;
         }
-    }
+    } = double.NaN;
 
     /// <summary>Амплитуда канала</summary>
     public long ChannelAmplitude => (1 << (_Header.BitsPerSample - 1)) - 1;
 
-    public double ChannelResolution => _Amplitude / ChannelAmplitude;
+    public double ChannelResolution => Amplitude / ChannelAmplitude;
 
-    public double AmplitudeResolution => ChannelAmplitude / _Amplitude;
+    public double AmplitudeResolution => ChannelAmplitude / Amplitude;
 
     /// <summary>Индексатор фреймов</summary>
     /// <param name="i">Номер отсчёта в потоке</param>

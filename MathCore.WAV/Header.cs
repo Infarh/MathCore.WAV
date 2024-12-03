@@ -29,7 +29,6 @@ public readonly struct Header : IEquatable<Header>
     /// <summary>Длина заголовка</summary>
     public const int Length = 44;
 
-
     /* ------------------------------------------------------------------------------------- */
     /// <summary>Идентификатор заголовка файла. Должен содержать символы "RIFF"</summary>
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
 
 namespace MathCore.WAV.ConsoleTests.Extensions;
@@ -25,7 +24,7 @@ internal static class BinaryReaderEx
                         yield return MemoryMarshal.Read<short>(buffer);
                         break;
                     case 1:
-                        if (reader.Read(buffer[1..]) != 1)
+                        if (reader.Read(buffer.AsSpan()[1..]) != 1)
                             yield break;
                         yield return MemoryMarshal.Read<short>(buffer);
                         break;

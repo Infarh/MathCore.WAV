@@ -38,13 +38,7 @@ internal static class Extensions
     /// <returns>Задача асинхронной записи целочисленного 4-байтового значения</returns>
     public static async Task WriteAsync(this BinaryWriter Writer, int value, CancellationToken Cancel = default) =>
         await Writer.BaseStream.WriteAsync(
-            buffer: new[]
-            {
-                (byte)value,
-                (byte)(value >> 8),
-                (byte)(value >> 16),
-                (byte)(value >> 24)
-            },
+            buffer: [(byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) ],
             offset: 0,
             count: 4,
             cancellationToken: Cancel);
@@ -56,11 +50,7 @@ internal static class Extensions
     /// <returns>Задача асинхронной записи целочисленного 2-байтового значения</returns>
     public static async Task WriteAsync(this BinaryWriter Writer, short value, CancellationToken Cancel = default) =>
         await Writer.BaseStream.WriteAsync(
-            buffer: new[]
-            {
-                (byte)value,
-                (byte) ((uint) value >> 8)
-            },
+            buffer: [(byte)value, (byte) ((uint) value >> 8)],
             offset: 0,
             count: 2,
             cancellationToken: Cancel);
@@ -81,6 +71,17 @@ internal static class Extensions
         return hash;
     }
 
+    /// <summary>
+    /// Преобразует массив <see cref="IEnumerable{T}"/> в перечисление массивов,
+    /// где каждый массив содержит следующий элемент из каждой входной последовательности.
+    /// </summary>
+    /// <typeparam name="T">Тип элементов во входных последовательностях.</typeparam>
+    /// <param name="Series">Массив <see cref="IEnumerable{T}"/>, который нужно обработать.</param>
+    /// <returns><see cref="IEnumerable{T}"/> массивов, где каждый массив содержит следующий элемент из каждой входной последовательности.</returns>
+    /// <remarks>
+    /// Метод освобождает перечислители входных последовательностей по завершении.
+    /// Если какой-либо перечислитель выбрасывает исключение при освобождении, оно перехватывается и игнорируется.
+    /// </remarks>
     public static IEnumerable<T[]> AsBlockEnumerable<T>(this IEnumerable<T>[] Series)
     {
         var series_length = Series.Length;
