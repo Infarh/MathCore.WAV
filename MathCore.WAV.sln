@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33103.184
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11217.181 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MathCore.WAV", "MathCore.WAV\MathCore.WAV.csproj", "{DD9CEAB3-1970-4DB6-A7B2-66919D649287}"
 EndProject
@@ -10,6 +10,13 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MathCore.WAV.Tests", "Tests\MathCore.WAV.Tests\MathCore.WAV.Tests.csproj", "{DBDB40EB-55C2-46A4-8441-D8EF9FCA478A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MathCore.WAV.ConsoleTests", "Tests\MathCore.WAV.ConsoleTests\MathCore.WAV.ConsoleTests.csproj", "{922D3863-2452-4D59-94C3-E366E274C215}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Service", ".Service", "{DEBBF9B8-2499-4CD6-AC7C-E30CB7A570D8}"
+	ProjectSection(SolutionItems) = preProject
+		.github\copilot-instructions.md = .github\copilot-instructions.md
+		.github\workflows\publish.yml = .github\workflows\publish.yml
+		.github\workflows\testing.yml = .github\workflows\testing.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
