@@ -1,5 +1,4 @@
 ﻿using System.Runtime.InteropServices;
-using System.Text;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
@@ -13,6 +12,19 @@ namespace MathCore.WAV;
 public readonly struct Header : IEquatable<Header>
 {
     /* ------------------------------------------------------------------------------------- */
+
+    private const string ChunkIdText = "RIFF";
+    private const string FormatText = "WAVE";
+    private const string SubChunk1IdText = "fmt ";
+    private const string SubChunk2IdText = "data";
+
+    private static readonly byte[] __ChunkIdBytes = [82, 73, 70, 70];
+    private static readonly byte[] __FormatBytes = [87, 65, 86, 69];
+    private static readonly byte[] __SubChunk1IdBytes = [102, 109, 116, 32];
+    private static readonly byte[] __SubChunk2IdBytes = [100, 97, 116, 97];
+
+    private static bool IsSignature(IReadOnlyList<byte> Value, byte B0, byte B1, byte B2, byte B3) =>
+        Value.Count == 4 && Value[0] == B0 && Value[1] == B1 && Value[2] == B2 && Value[3] == B3;
 
     /// <summary>Загрузить данные заголовка из объекта чтения двоичных данных</summary>
     /// <param name="reader">Объект чтения двоичных данных, осуществляющий доступ к источнику данных</param>
@@ -76,16 +88,16 @@ public readonly struct Header : IEquatable<Header>
     /* ------------------------------------------------------------------------------------- */
 
     /// <summary>Должен содержать строку "RIFF"</summary>
-    public string ChunkID => Encoding.UTF8.GetString(_ChunkID);
+    public string ChunkID => ChunkIdText;
 
     /// <summary>Должен содержать строку "WAVE"</summary>
-    public string Format => Encoding.UTF8.GetString(_Format);
+    public string Format => FormatText;
 
     /// <summary>Должен содержать строку "fmt\0x20"</summary>
-    public string SubChunk1Id => Encoding.UTF8.GetString(_SubChunk1Id);
+    public string SubChunk1Id => SubChunk1IdText;
 
     /// <summary>Должен содержать строку "data"</summary>
-    public string SubChunk2Id => Encoding.UTF8.GetString(_SubChunk2Id);
+    public string SubChunk2Id => SubChunk2IdText;
 
     /// <summary>Размер файла - 8 байт</summary>
     public int ChunkSize => _ChunkSize;
@@ -147,10 +159,10 @@ public readonly struct Header : IEquatable<Header>
         int SubChunk2Size
     )
     {
-        _ChunkID       = Encoding.UTF8.GetBytes("RIFF");
+        _ChunkID       = __ChunkIdBytes;
         _ChunkSize     = ChunkSize;
-        _Format        = Encoding.UTF8.GetBytes("WAVE");
-        _SubChunk1Id   = Encoding.UTF8.GetBytes("fmt ");
+        _Format        = __FormatBytes;
+        _SubChunk1Id   = __SubChunk1IdBytes;
         _SubChunk1Size = AudioFormat == WAV.Format.PCM ? 16 : SubChunk1Size;
         _AudioFormat   = AudioFormat;
         _ChannelsCount = ChannelsCount;
@@ -159,7 +171,7 @@ public readonly struct Header : IEquatable<Header>
         _BlockAlign    = BlockAlign;
         _BitsPerSample = BitsPerSample;
         _SubChunk2Size = SubChunk2Size;
-        _SubChunk2Id   = Encoding.UTF8.GetBytes("data");
+        _SubChunk2Id   = __SubChunk2IdBytes;
     }
 
     /// <summary>Инициализация нового заголовка WAV-файла в PCM-формате</summary>
@@ -178,10 +190,10 @@ public readonly struct Header : IEquatable<Header>
         int DataLength
     )
     {
-        _ChunkID       = Encoding.UTF8.GetBytes("RIFF");
+        _ChunkID       = __ChunkIdBytes;
         _ChunkSize     = FileLength - 8;
-        _Format        = Encoding.UTF8.GetBytes("WAVE");
-        _SubChunk1Id   = Encoding.UTF8.GetBytes("fmt ");
+        _Format        = __FormatBytes;
+        _SubChunk1Id   = __SubChunk1IdBytes;
         _SubChunk1Size = 16;
         _AudioFormat   = WAV.Format.PCM;
         _ChannelsCount = ChannelsCount;
@@ -190,7 +202,7 @@ public readonly struct Header : IEquatable<Header>
         _BlockAlign    = BlockAlign;
         _BitsPerSample = BitsPerSample;
         _SubChunk2Size = DataLength;
-        _SubChunk2Id   = Encoding.UTF8.GetBytes("data");
+        _SubChunk2Id   = __SubChunk2IdBytes;
     }
 
     /// <summary>Инициализация нового заголовка</summary>
@@ -211,7 +223,7 @@ public readonly struct Header : IEquatable<Header>
             throw new ArgumentNullException(nameof(reader));
 
         var file_length = (reader.BaseStream as FileStream)?.Length ?? -1;
-        if (file_length <= 44)
+        if (file_length != -1 && file_length <= Length)
             throw new ArgumentException("Попытка чтения пустого файла");
         //if (file_length != -1 && file_length < 44)
         //    throw new FormatException("Размер файла недостаточен для хранения даже заголовка");
@@ -220,7 +232,7 @@ public readonly struct Header : IEquatable<Header>
 
         //Чтение текстовой метки "RIFF" (кодировка UTF-8)
         _ChunkID = reader.ReadBytes(4); // RIFF 0..3 (4)
-        if (Encoding.UTF8.GetString(_ChunkID) != "RIFF")
+        if (!IsSignature(_ChunkID, 82, 73, 70, 70))
             throw new FormatException("Ошибка формата - отсутствует сигнатура RIFF в начале потока данных");
 
         // Чтение размера файла без заголовка - должно быть равно длине файла минус 8 байт
@@ -230,12 +242,12 @@ public readonly struct Header : IEquatable<Header>
 
         // Чтение текстовой метки "WAVE" (кодировка UTF-8)
         _Format = reader.ReadBytes(4); // WAVE 8..11 (4)
-        if (Encoding.UTF8.GetString(_Format) != "WAVE")
+        if (!IsSignature(_Format, 87, 65, 86, 69))
             throw new FormatException("Ошибка формата - отсутствует сигнатура WAVE в заголовке");
 
         // Чтение текстовой метки "fmt " (кодировка UTF-8)
         _SubChunk1Id = reader.ReadBytes(4); // fmt\0x20 12..15 (4)
-        if (Encoding.UTF8.GetString(_SubChunk1Id) != "fmt ")
+        if (!IsSignature(_SubChunk1Id, 102, 109, 116, 32))
             throw new FormatException("Ошибка формата - отсутствует сигнатура \"fmt \" в заголовке");
 
         // Чтение оставшейся длины заголовка - для PCM-формата файла должно быть равно 16 байтам
@@ -257,6 +269,8 @@ public readonly struct Header : IEquatable<Header>
 
         // Чтение длины кадра - число байт на все каналы на одно значение в один момент времени
         _BlockAlign = reader.ReadInt16(); // 32..33 (2)
+        if (_BlockAlign <= 0)
+            throw new FormatException("Ошибка формата файла: размер фрейма должен быть больше 0");
         if (_ByteRate / _BlockAlign != _SampleRate)
             throw new FormatException("Ошибка формата файла: скорость потока (Байт/с) делёная на размер фрейма не равна частоте дискретизации");
 
@@ -269,8 +283,8 @@ public readonly struct Header : IEquatable<Header>
 
         // Чтение текстовой метки "data" (кодировка UTF-8)
         _SubChunk2Id = reader.ReadBytes(4); // 36..39 (4)
-        if (Encoding.UTF8.GetString(_SubChunk2Id) != "data")
-            throw new FormatException("Ошибка формата - отсутствует сигнатура WAVE в заголовке");
+        if (!IsSignature(_SubChunk2Id, 100, 97, 116, 97))
+            throw new FormatException("Ошибка формата - отсутствует сигнатура data в заголовке");
 
         // Чтение оставшейся после заголовка длины файла. Должно быть равно длине файла - 44 байта для формата PCM
         _SubChunk2Size = reader.ReadInt32(); // 40..43 (4) = file_length - 44
@@ -313,23 +327,23 @@ public readonly struct Header : IEquatable<Header>
     /// <param name="Cancel">Признак отмены асинхронной операции</param>
     public async Task WriteToAsync(BinaryWriter writer, CancellationToken Cancel = default)
     {
-        await writer.WriteAsync(_ChunkID, Cancel);
-        await writer.WriteAsync(_ChunkSize, Cancel);
-        await writer.WriteAsync(_Format, Cancel);
+        await writer.WriteAsync(_ChunkID, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_ChunkSize, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_Format, Cancel).ConfigureAwait(false);
 
-        await writer.WriteAsync(_SubChunk1Id, Cancel);
-        await writer.WriteAsync(_SubChunk1Size, Cancel);
+        await writer.WriteAsync(_SubChunk1Id, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_SubChunk1Size, Cancel).ConfigureAwait(false);
 
-        await writer.WriteAsync((short)_AudioFormat, Cancel);
+        await writer.WriteAsync((short)_AudioFormat, Cancel).ConfigureAwait(false);
 
-        await writer.WriteAsync(_ChannelsCount, Cancel);
-        await writer.WriteAsync(_SampleRate, Cancel);
-        await writer.WriteAsync(_ByteRate, Cancel);
-        await writer.WriteAsync(_BlockAlign, Cancel);
-        await writer.WriteAsync(_BitsPerSample, Cancel);
+        await writer.WriteAsync(_ChannelsCount, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_SampleRate, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_ByteRate, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_BlockAlign, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_BitsPerSample, Cancel).ConfigureAwait(false);
 
-        await writer.WriteAsync(_SubChunk2Id, Cancel);
-        await writer.WriteAsync(_SubChunk2Size, Cancel);
+        await writer.WriteAsync(_SubChunk2Id, Cancel).ConfigureAwait(false);
+        await writer.WriteAsync(_SubChunk2Size, Cancel).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
