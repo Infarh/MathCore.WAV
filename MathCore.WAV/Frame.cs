@@ -38,16 +38,36 @@ public readonly struct Frame(double Time, int ChannelsCount, byte[] data) : IEqu
 
     /// <summary>Получение значения канала по его индексу в фрейме</summary>
     /// <param name="channel">Индекс канала</param>
+    /// <exception cref="ArgumentOutOfRangeException">Если индекс канала выходит за пределы диапазона</exception>
     /// <exception cref="NotSupportedException">Если длина канала не равна 8, 16, 32, 64 бита</exception>
-    public long this[int channel] =>
-        _BytesPerChannel switch
+    public long this[int channel] => TryGetValue(channel, out var value)
+        ? value
+        : throw new ArgumentOutOfRangeException(nameof(channel), channel, $"Индекс канала должен быть в диапазоне от 0 до {_ChannelsCount - 1}");
+
+    /// <summary>Попытка получить значение канала по его индексу в фрейме</summary>
+    /// <param name="Channel">Индекс канала</param>
+    /// <param name="Value">Значение канала</param>
+    /// <returns>Истина, если индекс канала корректен и значение получено</returns>
+    /// <exception cref="NotSupportedException">Если длина канала не равна 8, 16, 32, 64 бита</exception>
+    public bool TryGetValue(int Channel, out long Value)
+    {
+        if (Channel < 0 || Channel >= _ChannelsCount)
         {
-            1 => _Data[channel],
-            2 => BitConverter.ToInt16(_Data, channel * _BytesPerChannel),
-            4 => BitConverter.ToInt32(_Data, channel * _BytesPerChannel),
-            8 => BitConverter.ToInt64(_Data, channel * _BytesPerChannel),
+            Value = default;
+            return false;
+        }
+
+        Value = _BytesPerChannel switch
+        {
+            1 => _Data[Channel],
+            2 => BitConverter.ToInt16(_Data, Channel * _BytesPerChannel),
+            4 => BitConverter.ToInt32(_Data, Channel * _BytesPerChannel),
+            8 => BitConverter.ToInt64(_Data, Channel * _BytesPerChannel),
             _ => throw new NotSupportedException($"Размерность отсчёта {_BytesPerChannel} байт на канал не поддерживается"),
         };
+
+        return true;
+    }
 
     /* ------------------------------------------------------------------------------------- */
 

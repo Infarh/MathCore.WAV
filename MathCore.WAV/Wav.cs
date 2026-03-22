@@ -111,22 +111,34 @@ public abstract class Wav
     /// <summary>Индексатор фреймов</summary>
     /// <param name="i">Номер отсчёта в потоке</param>
     /// <returns>Фрейм со значениями всех каналов</returns>
-    public virtual Frame this[int i]
-    {
-        get
-        {
-            using var data_stream   = GetDataStream();
-            var       sample_length = _Header.BlockAlign;
-            var       data_offset   = Header.Length + i * sample_length;
-            if (i < 0 || data_offset > data_stream.Length - sample_length)
-                throw new EndOfStreamException("Попытка чтения данных за пределами потока");
+    /// <exception cref="EndOfStreamException">Если индекс фрейма выходит за пределы данных</exception>
+    public virtual Frame this[int i] => TryGetFrame(i, out var frame)
+        ? frame
+        : throw new EndOfStreamException("Попытка чтения данных за пределами потока");
 
-            var sample_data = new byte[sample_length];
-            data_stream.Seek(data_offset, SeekOrigin.Begin);
-            if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
-                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
-            return new(i / (double)_Header.SampleRate, _Header.ChannelsCount, sample_data);
+    /// <summary>Попытка получить фрейм по индексу без генерации исключения при выходе за границы данных</summary>
+    /// <param name="Index">Индекс фрейма</param>
+    /// <param name="Frame">Найденный фрейм</param>
+    /// <returns>Истина, если фрейм прочитан успешно</returns>
+    public virtual bool TryGetFrame(int Index, out Frame Frame)
+    {
+        using var data_stream = GetDataStream();
+
+        var sample_length = _Header.BlockAlign;
+        var data_offset = Header.Length + Index * sample_length;
+        if (Index < 0 || data_offset > data_stream.Length - sample_length)
+        {
+            Frame = default;
+            return false;
         }
+
+        var sample_data = new byte[sample_length];
+        data_stream.Seek(data_offset, SeekOrigin.Begin);
+        if (data_stream.FillBuffer(sample_data) != sample_length)
+            throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {Index} фрейма");
+
+        Frame = new(Index / (double)_Header.SampleRate, _Header.ChannelsCount, sample_data);
+        return true;
     }
 
     /* ------------------------------------------------------------------------------------- */
@@ -158,7 +170,7 @@ public abstract class Wav
         var bytes_per_sample = _Header.BytesPerSample;
         for (var i = 0; i < data_length; i++)
         {
-            if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+            if (data_stream.FillBuffer(sample_data) != sample_length)
                 throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
             result[i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
         }
@@ -181,14 +193,14 @@ public abstract class Wav
         if (double.IsNaN(resolution))
             for (var i = 0; i < data_length; i++)
             {
-                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.FillBuffer(sample_data) != sample_length)
                     throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
                 result[i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
             }
         else
             for (var i = 0; i < data_length; i++)
             {
-                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.FillBuffer(sample_data) != sample_length)
                     throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
                 result[i] = SampleToValue(ReadChannelValue(sample_data, Channel, bytes_per_sample), resolution);
             }
@@ -212,14 +224,14 @@ public abstract class Wav
         if (double.IsNaN(channel_resolution))
             for (var i = 0; i < data_length; i++)
             {
-                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.FillBuffer(sample_data) != sample_length)
                     throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
                 result[i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
             }
         else
             for (var i = 0; i < data_length; i++)
             {
-                if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+                if (data_stream.FillBuffer(sample_data) != sample_length)
                     throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
                 result[i] = SampleToValue(ReadChannelValue(sample_data, Channel, bytes_per_sample), resolution);
             }
@@ -247,7 +259,7 @@ public abstract class Wav
         for (var i = 0; i < data_length; i++)
         {
             Cancel.ThrowIfCancellationRequested();
-            if (await data_stream.ReadAsync(sample_data, 0, sample_length, Cancel).ConfigureAwait(false) != sample_length)
+            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                 throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
             result[i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
             Progress?.Report((double)i / data_length);
@@ -274,7 +286,7 @@ public abstract class Wav
         var bytes_per_sample = _Header.BytesPerSample;
         for (var i = 0; i < data_length; i++)
         {
-            if (data_stream.Read(sample_data, 0, sample_length) != sample_length)
+            if (data_stream.FillBuffer(sample_data) != sample_length)
                 throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
             for (var channel = 0; channel < channels_count; channel++)
                 result[channel][i] = ReadChannelValue(sample_data, channel, bytes_per_sample);
@@ -305,7 +317,7 @@ public abstract class Wav
         for (var i = 0; i < data_length; i++)
         {
             Cancel.ThrowIfCancellationRequested();
-            if (await data_stream.ReadAsync(sample_data, 0, sample_length, Cancel).ConfigureAwait(false) != sample_length)
+            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                 throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
             for (var channel = 0; channel < channels_count; channel++)
                 result[channel][i] = ReadChannelValue(sample_data, channel, bytes_per_sample);

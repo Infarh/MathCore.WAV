@@ -53,7 +53,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
         double sample_rate      = _Header.SampleRate;
         for (var i = 0; i < data_length; i++)
         {
-            if (data_stream.FeelBuffer(sample_data) != sample_length)
+            if (data_stream.FillBuffer(sample_data) != sample_length)
                 yield break;
 
             yield return (i / sample_rate, ReadChannelValue(sample_data, Channel, bytes_per_sample));
@@ -81,7 +81,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
         for (var i = 0; i < data_length; i++)
         {
             Cancel.ThrowIfCancellationRequested();
-            if (await data_stream.FeelBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
+            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                 yield break;
 
             Progress?.Report((double)i / data_length);
@@ -106,7 +106,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
         for (var i = 0; i < data_length; i++)
         {
             var result = new long[channels_count];
-            if (data_stream.FeelBuffer(sample_data) != sample_length)
+            if (data_stream.FillBuffer(sample_data) != sample_length)
                 yield break;
 
             for (var channel = 0; channel < channels_count; channel++)
@@ -137,7 +137,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
         {
             Cancel.ThrowIfCancellationRequested();
             var result = new long[channels_count];
-            if (await data_stream.FeelBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
+            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                 yield break;
 
             for (var channel = 0; channel < channels_count; channel++)
@@ -165,7 +165,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
         double sample_rate      = _Header.SampleRate;
         for (var i = 0; i < data_length; i++)
         {
-            if (data_stream.FeelBuffer(sample_data) != sample_length)
+            if (data_stream.FillBuffer(sample_data) != sample_length)
                 yield break;
 
             for (var channel = 0; channel < channels_count; channel++)
@@ -196,7 +196,7 @@ public partial class WavFile(FileInfo File) : Wav(File.OpenRead().Using(Header.L
         for (var i = 0; i < data_length; i++)
         {
             Cancel.ThrowIfCancellationRequested();
-            if (await data_stream.FeelBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
+            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                 yield break;
 
             for (var channel = 0; channel < channels_count; channel++)

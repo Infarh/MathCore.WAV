@@ -58,4 +58,45 @@ public class WavFileTests
 
         Assert.AreEqual(123L, wav_stream.GetChannel(0)[0]);
     }
+
+    [TestMethod]
+    public void TryGetFrame_ReturnsTrue_ForExistingFrame()
+    {
+        var file_name = GetTempFilePath();
+        using (var writer = new WavFileWriter(file_name, BitsPerSample: 16))
+            writer.Write(321L);
+
+        var wav = new WavFile(file_name);
+        var result = wav.TryGetFrame(0, out var frame);
+
+        Assert.IsTrue(result);
+        Assert.AreEqual(321L, frame[0]);
+    }
+
+    [TestMethod]
+    public void TryGetFrame_ReturnsFalse_ForOutOfRangeFrame()
+    {
+        var file_name = GetTempFilePath();
+        using (var writer = new WavFileWriter(file_name, BitsPerSample: 16))
+            writer.Write(321L);
+
+        var wav = new WavFile(file_name);
+        var result = wav.TryGetFrame(10, out _);
+
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod]
+    public void Frame_TryGetValue_ReturnsFalse_ForInvalidChannel()
+    {
+        var file_name = GetTempFilePath();
+        using (var writer = new WavFileWriter(file_name, ChannelsCount: 1, BitsPerSample: 16))
+            writer.Write(321L);
+
+        var wav = new WavFile(file_name);
+        var frame = wav[0];
+        var result = frame.TryGetValue(1, out _);
+
+        Assert.IsFalse(result);
+    }
 }
