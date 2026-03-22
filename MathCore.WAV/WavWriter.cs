@@ -40,6 +40,60 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
 
     /* ------------------------------------------------------------------------------------- */
 
+    private static long GetChannelAmplitude(short BitsPerSample) => BitsPerSample switch
+    {
+        64 => long.MaxValue,
+        > 0 and < 64 => (1L << (BitsPerSample - 1)) - 1,
+        _ => throw new ArgumentOutOfRangeException(nameof(BitsPerSample), BitsPerSample, "Поддерживается 8, 16, 32 и 64 бит на канал")
+    };
+
+    private void ValidateValuesLength(int ValuesLength, string ParamName = "Values")
+    {
+        if (ValuesLength != _ChannelsCount)
+            throw new ArgumentArrayLengthException(ParamName, ValuesLength, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+    }
+
+    private static long ConvertToSample(double Value) => (long)Math.Round(Value);
+
+    private long ConvertToSampleValue(double Value)
+    {
+        var amplitude = _Amplitude;
+        if (double.IsNaN(amplitude))
+            return ConvertToSample(Value);
+
+        var sample = Math.Min(amplitude, Math.Max(-amplitude, Value)) - _ValuesOffset;
+        return Wav.ValueToSample(sample, AmplitudeResolution);
+    }
+
+    private long ConvertToSampleValue(decimal Value)
+    {
+        if (double.IsNaN(_Amplitude))
+            return (long)Math.Round(Value);
+
+        var amplitude = (decimal)_Amplitude;
+        var sample    = Math.Min(amplitude, Math.Max(-amplitude, Value)) - (decimal)_ValuesOffset;
+        return Wav.ValueToSample(sample, (decimal)AmplitudeResolution);
+    }
+
+    private double GetCurrentTime()
+    {
+        var pos = _DataStream.Length - Header.Length;
+        return (double)pos / _BlockAlign / _SampleRate;
+    }
+
+    private void CopyValuesToWriteBuffer(long[] Values)
+    {
+        var byte_per_sample = _BitsPerSample >> 3;
+        if (byte_per_sample is not (1 or 2 or 4 or 8))
+            throw new ArgumentOutOfRangeException(nameof(_BitsPerSample), _BitsPerSample, "Поддерживается 8, 16, 32 и 64 бит на канал");
+
+        if (!ReferenceEquals(Values, _ChannelValues))
+            Array.Copy(Values, _ChannelValues, _ChannelsCount);
+
+        for (var channel = 0; channel < _ChannelsCount; channel++)
+            Buffer.BlockCopy(_ChannelValues, channel << 3, _WriteBuffer, channel * byte_per_sample, byte_per_sample);
+    }
+
     /// <summary>Число каналов</summary>
     public int ChannelsCount => _ChannelsCount;
 
@@ -70,7 +124,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
         get => _Amplitude;
         set
         {
-            if (value <= double.Epsilon) 
+            if (value <= double.Epsilon)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Требуется положительное значение");
 
             _Amplitude = value;
@@ -78,7 +132,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     }
 
     /// <summary>Амплитуда канала</summary>
-    public long ChannelAmplitude => (1 << (_BitsPerSample - 1)) - 1;
+    public long ChannelAmplitude => GetChannelAmplitude(_BitsPerSample);
 
     public double ChannelResolution => _Amplitude / ChannelAmplitude;
 
@@ -142,8 +196,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public double Write(params short[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+        ValidateValuesLength(Values.Length);
 
         for (var i = 0; i < _ChannelsCount; i++)
             _ChannelValues[i] = Values[i];
@@ -157,8 +210,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public double Write(params int[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+        ValidateValuesLength(Values.Length);
 
         for (var i = 0; i < _ChannelsCount; i++)
             _ChannelValues[i] = Values[i];
@@ -172,19 +224,10 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public double Write(params double[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+        ValidateValuesLength(Values.Length);
 
-        var a = _Amplitude;
-        if (double.IsNaN(a))
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = (long)Math.Round(Values[i]);
-        else
-        {
-            var k = AmplitudeResolution;
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = Wav.ValueToSample(Math.Min(a, Math.Max(-a, Values[i])) - _ValuesOffset, k);
-        }
+        for (var i = 0; i < _ChannelsCount; i++)
+            _ChannelValues[i] = ConvertToSampleValue(Values[i]);
 
         return Write(_ChannelValues);
     }
@@ -195,19 +238,10 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public double Write(params decimal[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+        ValidateValuesLength(Values.Length);
 
-        if (double.IsNaN(_Amplitude))
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = (long)Math.Round(Values[i]);
-        else
-        {
-            var a = (decimal)_Amplitude;
-            var k = (decimal)AmplitudeResolution;
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = Wav.ValueToSample(Math.Min(a, Math.Max(-a, Values[i])) - (decimal)_ValuesOffset, k);
-        }
+        for (var i = 0; i < _ChannelsCount; i++)
+            _ChannelValues[i] = ConvertToSampleValue(Values[i]);
 
         return Write(_ChannelValues);
     }
@@ -221,20 +255,10 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public double Write(params long[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
-
-        var byte_per_sample = _BitsPerSample >> 3;
-        if (byte_per_sample is 1 or 2 or 4 or 8)
-            for (var channel = 0; channel < _ChannelsCount; channel++)
-                Buffer.BlockCopy(Values, channel << 3, _WriteBuffer, channel * byte_per_sample, byte_per_sample);
-        else
-            throw new ArgumentOutOfRangeException(nameof(_BitsPerSample), _BitsPerSample, "Поддерживается 8, 16, 32 и 64 бит на канал");
-
+        ValidateValuesLength(Values.Length);
+        CopyValuesToWriteBuffer(Values);
         _DataStream.Write(_WriteBuffer, 0, _BlockAlign);
-
-        var pos = _DataStream.Length - Header.Length;
-        return (double)pos / _BlockAlign / _SampleRate;
+        return GetCurrentTime();
     }
 
     /// <summary>Выполнить асинхронную операцию записи значений всех каналов на текущий момент времени</summary>
@@ -249,8 +273,7 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public async ValueTask<double> WriteAsync(CancellationToken Cancel, params int[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+        ValidateValuesLength(Values.Length);
 
         for (var i = 0; i < _ChannelsCount; i++)
             _ChannelValues[i] = Values[i];
@@ -270,15 +293,10 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public async ValueTask<double> WriteAsync(CancellationToken Cancel, params double[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+        ValidateValuesLength(Values.Length);
 
-        if (_Amplitude is double.NaN or 1 && _ValuesOffset == 0)
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = (long)Math.Round(Values[i]);
-        else
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = (long)(Math.Round((Values[i] - _ValuesOffset) / _Amplitude) * _Amplitude);
+        for (var i = 0; i < _ChannelsCount; i++)
+            _ChannelValues[i] = ConvertToSampleValue(Values[i]);
 
         return await WriteAsync(Cancel, _ChannelValues).ConfigureAwait(false);
     }
@@ -295,15 +313,10 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public async ValueTask<double> WriteAsync(CancellationToken Cancel, params decimal[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length != _ChannelsCount)
-            throw new ArgumentArrayLengthException(nameof(Values), Values.Length, _ChannelsCount, "Размер массива параметров не соответствует числу каналов файла");
+        ValidateValuesLength(Values.Length);
 
-        if (_Amplitude is double.NaN or 1 && _ValuesOffset == 0)
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = (long)Math.Round(Values[i]);
-        else
-            for (var i = 0; i < _ChannelsCount; i++)
-                _ChannelValues[i] = (long)(Math.Round((Values[i] - (decimal)_ValuesOffset) / (decimal)_Amplitude) * (decimal)_Amplitude);
+        for (var i = 0; i < _ChannelsCount; i++)
+            _ChannelValues[i] = ConvertToSampleValue(Values[i]);
 
         return await WriteAsync(Cancel, _ChannelValues).ConfigureAwait(false);
     }
@@ -320,21 +333,12 @@ public class WavFileWriter : IDisposable, IAsyncDisposable
     public async ValueTask<double> WriteAsync(CancellationToken Cancel, params long[] Values)
     {
         if (Values is null) throw new ArgumentNullException(nameof(Values));
-        if (Values.Length < _ChannelsCount)
-            throw new ArgumentException($"Число каналов в файле задано равным {_ChannelsCount}, а для записи передано {Values.Length} значений");
+        ValidateValuesLength(Values.Length);
         Cancel.ThrowIfCancellationRequested();
 
-        var byte_per_sample = _BitsPerSample >> 3;
-        if (byte_per_sample is 1 or 2 or 4 or 8)
-            for (var channel = 0; channel < _ChannelsCount; channel++)
-                Buffer.BlockCopy(Values, channel << 3, _WriteBuffer, channel * byte_per_sample, byte_per_sample);
-        else
-            throw new ArgumentOutOfRangeException(nameof(_BitsPerSample), _BitsPerSample, "Поддерживается 8, 16, 32 и 64 бит на канал");
-
+        CopyValuesToWriteBuffer(Values);
         await _DataStream.WriteAsync(_WriteBuffer, 0, _BlockAlign, Cancel).ConfigureAwait(false);
-
-        var pos = _DataStream.Length - Header.Length;
-        return (double)pos / _BlockAlign / _SampleRate;
+        return GetCurrentTime();
     }
 
     public void Write(params IEnumerable<long>[] Signals)

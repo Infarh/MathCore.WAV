@@ -54,7 +54,11 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
     public override Stream GetDataStream()
     {
         if (_DataStream is FileStream file)
-            return new FileStream(file.Name, FileMode.Open, FileAccess.Read, FileShare.Read);
+        {
+            var stream = new FileStream(file.Name, FileMode.Open, FileAccess.Read, FileShare.Read);
+            stream.Seek(Header.Length, SeekOrigin.Begin);
+            return stream;
+        }
 
         if (_DataStream.CanSeek)
             _DataStream.Seek(Header.Length, SeekOrigin.Begin);
@@ -70,9 +74,7 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
         {
             data_stream = GetDataStream();
 
-            var channels_count = _Header.ChannelsCount;
-            if (Channel >= channels_count)
-                throw new ArgumentOutOfRangeException(nameof(Channel), Channel, $"В файле содержится {channels_count} каналов, а запрошен {Channel}");
+            Channel = ValidateChannelIndex(Channel);
 
             var sample_length = _Header.BlockAlign;
             var sample_data   = new byte[sample_length];
@@ -83,20 +85,10 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
             double sample_rate      = _Header.SampleRate;
             for (var i = 0; i < data_length; i++)
             {
-                data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (data_stream.FeelBuffer(sample_data) != sample_length)
                     yield break;
 
-                var value = bytes_per_sample switch
-                {
-                    1 => sample_data[Channel],
-                    2 => BitConverter.ToInt16(sample_data, Channel * bytes_per_sample),
-                    4 => BitConverter.ToInt32(sample_data, Channel * bytes_per_sample),
-                    8 => BitConverter.ToInt64(sample_data, Channel * bytes_per_sample),
-                    _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
-                };
-
-                yield return (i / sample_rate, value);
+                yield return (i / sample_rate, ReadChannelValue(sample_data, Channel, bytes_per_sample));
             }
         }
         finally
@@ -118,9 +110,7 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
         {
             data_stream = GetDataStream();
 
-            var channels_count = _Header.ChannelsCount;
-            if (Channel >= channels_count)
-                throw new ArgumentOutOfRangeException(nameof(Channel), Channel, $"В файле содержится {channels_count} каналов, а запрошен {Channel}");
+            Channel = ValidateChannelIndex(Channel);
 
             var sample_length = _Header.BlockAlign;
             var sample_data   = new byte[sample_length];
@@ -132,21 +122,11 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
             for (var i = 0; i < data_length; i++)
             {
                 Cancel.ThrowIfCancellationRequested();
-                data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (await data_stream.FeelBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                     yield break;
 
-                var value = bytes_per_sample switch
-                {
-                    1 => sample_data[Channel],
-                    2 => BitConverter.ToInt16(sample_data, Channel * bytes_per_sample),
-                    4 => BitConverter.ToInt32(sample_data, Channel * bytes_per_sample),
-                    8 => BitConverter.ToInt64(sample_data, Channel * bytes_per_sample),
-                    _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
-                };
-
                 Progress?.Report((double)i / data_length);
-                yield return (i / sample_rate, value);
+                yield return (i / sample_rate, ReadChannelValue(sample_data, Channel, bytes_per_sample));
             }
         }
         finally
@@ -176,19 +156,11 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
             for (var i = 0; i < data_length; i++)
             {
                 var result = new long[channels_count];
-                data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (data_stream.FeelBuffer(sample_data) != sample_length)
                     yield break;
 
                 for (var channel = 0; channel < channels_count; channel++)
-                    result[channel] = bytes_per_sample switch
-                    {
-                        1 => sample_data[channel],
-                        2 => BitConverter.ToInt16(sample_data, channel * bytes_per_sample),
-                        4 => BitConverter.ToInt32(sample_data, channel * bytes_per_sample),
-                        8 => BitConverter.ToInt64(sample_data, channel * bytes_per_sample),
-                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
-                    };
+                    result[channel] = ReadChannelValue(sample_data, channel, bytes_per_sample);
 
                 yield return (i / sample_rate, result);
             }
@@ -224,19 +196,11 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
             {
                 Cancel.ThrowIfCancellationRequested();
                 var result = new long[channels_count];
-                data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (await data_stream.FeelBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                     yield break;
 
                 for (var channel = 0; channel < channels_count; channel++)
-                    result[channel] = bytes_per_sample switch
-                    {
-                        1 => sample_data[channel],
-                        2 => BitConverter.ToInt16(sample_data, channel * bytes_per_sample),
-                        4 => BitConverter.ToInt32(sample_data, channel * bytes_per_sample),
-                        8 => BitConverter.ToInt64(sample_data, channel * bytes_per_sample),
-                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
-                    };
+                    result[channel] = ReadChannelValue(sample_data, channel, bytes_per_sample);
 
                 Progress?.Report((double)i / data_length);
                 yield return (i / sample_rate, result);
@@ -269,19 +233,11 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
             double sample_rate      = _Header.SampleRate;
             for (var i = 0; i < data_length; i++)
             {
-                data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (data_stream.FeelBuffer(sample_data) != sample_length)
                     yield break;
 
                 for (var channel = 0; channel < channels_count; channel++)
-                    result[channel] = bytes_per_sample switch
-                    {
-                        1 => sample_data[channel],
-                        2 => BitConverter.ToInt16(sample_data, channel * bytes_per_sample),
-                        4 => BitConverter.ToInt32(sample_data, channel * bytes_per_sample),
-                        8 => BitConverter.ToInt64(sample_data, channel * bytes_per_sample),
-                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
-                    };
+                    result[channel] = ReadChannelValue(sample_data, channel, bytes_per_sample);
 
                 yield return (i / sample_rate, result);
             }
@@ -317,19 +273,11 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
             for (var i = 0; i < data_length; i++)
             {
                 Cancel.ThrowIfCancellationRequested();
-                data_stream.Seek(Header.Length + i * sample_length, SeekOrigin.Begin);
                 if (await data_stream.FeelBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
                     yield break;
 
                 for (var channel = 0; channel < channels_count; channel++)
-                    result[channel] = bytes_per_sample switch
-                    {
-                        1 => sample_data[channel],
-                        2 => BitConverter.ToInt16(sample_data, channel * bytes_per_sample),
-                        4 => BitConverter.ToInt32(sample_data, channel * bytes_per_sample),
-                        8 => BitConverter.ToInt64(sample_data, channel * bytes_per_sample),
-                        _ => throw new NotSupportedException($"Размерность отсчёта {bytes_per_sample} байт на канал не поддерживается")
-                    };
+                    result[channel] = ReadChannelValue(sample_data, channel, bytes_per_sample);
 
                 Progress?.Report((double)i / data_length);
                 yield return (i / sample_rate, result);
