@@ -153,27 +153,200 @@ public abstract class Wav
     /// <returns>Поток байт данных WAV</returns>
     public abstract Stream GetDataStream();
 
+    /// <summary>Прочитать значения отсчётов канала в буфер</summary>
+    /// <param name="Channel">Номер канала</param>
+    /// <param name="Buffer">Буфер значений канала</param>
+    /// <param name="Offset">Смещение в буфере</param>
+    /// <returns>Количество прочитанных отсчётов</returns>
+    public int ReadChannel(int Channel, long[] Buffer, int Offset = 0)
+    {
+        if (Buffer is null)
+            throw new ArgumentNullException(nameof(Buffer));
+
+        if (Offset < 0 || Offset > Buffer.Length)
+            throw new ArgumentOutOfRangeException(nameof(Offset), Offset, "Смещение должно быть в диапазоне буфера");
+
+        Channel = ValidateChannelIndex(Channel);
+
+        var frames_to_read = Math.Min(_Header.FrameCount, Buffer.Length - Offset);
+        if (frames_to_read <= 0)
+            return 0;
+
+        using var data_stream = GetDataStream();
+
+        var sample_length = _Header.BlockAlign;
+        var sample_data = new byte[sample_length];
+        var bytes_per_sample = _Header.BytesPerSample;
+
+        for (var i = 0; i < frames_to_read; i++)
+        {
+            if (data_stream.FillBuffer(sample_data) != sample_length)
+                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+
+            Buffer[Offset + i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
+        }
+
+        return frames_to_read;
+    }
+
+    /// <summary>Асинхронно прочитать значения отсчётов канала в буфер</summary>
+    /// <param name="Channel">Номер канала</param>
+    /// <param name="Buffer">Буфер значений канала</param>
+    /// <param name="Offset">Смещение в буфере</param>
+    /// <param name="Progress">Объект информирования о прогрессе</param>
+    /// <param name="Cancel">Признак отмены операции</param>
+    /// <returns>Количество прочитанных отсчётов</returns>
+    public async Task<int> ReadChannelAsync(int Channel, long[] Buffer, int Offset = 0, IProgress<double> Progress = null, CancellationToken Cancel = default)
+    {
+        if (Buffer is null)
+            throw new ArgumentNullException(nameof(Buffer));
+
+        if (Offset < 0 || Offset > Buffer.Length)
+            throw new ArgumentOutOfRangeException(nameof(Offset), Offset, "Смещение должно быть в диапазоне буфера");
+
+        Cancel.ThrowIfCancellationRequested();
+        Channel = ValidateChannelIndex(Channel);
+
+        var frames_to_read = Math.Min(_Header.FrameCount, Buffer.Length - Offset);
+        if (frames_to_read <= 0)
+            return 0;
+
+        using var data_stream = GetDataStream();
+
+        var sample_length = _Header.BlockAlign;
+        var sample_data = new byte[sample_length];
+        var bytes_per_sample = _Header.BytesPerSample;
+
+        for (var i = 0; i < frames_to_read; i++)
+        {
+            Cancel.ThrowIfCancellationRequested();
+            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
+                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+
+            Buffer[Offset + i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
+            Progress?.Report((double)i / frames_to_read);
+        }
+
+        return frames_to_read;
+    }
+
+    /// <summary>Прочитать значения отсчётов всех каналов в буферы</summary>
+    /// <param name="Buffers">Буферы каналов</param>
+    /// <param name="Offset">Смещение в буферах</param>
+    /// <returns>Количество прочитанных фреймов</returns>
+    public int ReadChannels(long[][] Buffers, int Offset = 0)
+    {
+        if (Buffers is null)
+            throw new ArgumentNullException(nameof(Buffers));
+
+        var channels_count = _Header.ChannelsCount;
+        if (Buffers.Length != channels_count)
+            throw new ArgumentException($"Число буферов должно быть равно числу каналов {channels_count}", nameof(Buffers));
+
+        if (Offset < 0)
+            throw new ArgumentOutOfRangeException(nameof(Offset), Offset, "Смещение должно быть неотрицательным");
+
+        var frames_to_read = _Header.FrameCount;
+        for (var channel = 0; channel < channels_count; channel++)
+        {
+            var buffer = Buffers[channel];
+            if (buffer is null)
+                throw new ArgumentNullException(nameof(Buffers), $"Буфер канала {channel} не задан");
+
+            if (Offset > buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(Offset), Offset, "Смещение должно быть в диапазоне каждого буфера");
+
+            frames_to_read = Math.Min(frames_to_read, buffer.Length - Offset);
+        }
+
+        if (frames_to_read <= 0)
+            return 0;
+
+        using var data_stream = GetDataStream();
+
+        var sample_length = _Header.BlockAlign;
+        var sample_data = new byte[sample_length];
+        var bytes_per_sample = _Header.BytesPerSample;
+
+        for (var i = 0; i < frames_to_read; i++)
+        {
+            if (data_stream.FillBuffer(sample_data) != sample_length)
+                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+
+            for (var channel = 0; channel < channels_count; channel++)
+                Buffers[channel][Offset + i] = ReadChannelValue(sample_data, channel, bytes_per_sample);
+        }
+
+        return frames_to_read;
+    }
+
+    /// <summary>Асинхронно прочитать значения отсчётов всех каналов в буферы</summary>
+    /// <param name="Buffers">Буферы каналов</param>
+    /// <param name="Offset">Смещение в буферах</param>
+    /// <param name="Progress">Объект информирования о прогрессе</param>
+    /// <param name="Cancel">Признак отмены операции</param>
+    /// <returns>Количество прочитанных фреймов</returns>
+    public async Task<int> ReadChannelsAsync(long[][] Buffers, int Offset = 0, IProgress<double> Progress = null, CancellationToken Cancel = default)
+    {
+        if (Buffers is null)
+            throw new ArgumentNullException(nameof(Buffers));
+
+        var channels_count = _Header.ChannelsCount;
+        if (Buffers.Length != channels_count)
+            throw new ArgumentException($"Число буферов должно быть равно числу каналов {channels_count}", nameof(Buffers));
+
+        if (Offset < 0)
+            throw new ArgumentOutOfRangeException(nameof(Offset), Offset, "Смещение должно быть неотрицательным");
+
+        Cancel.ThrowIfCancellationRequested();
+
+        var frames_to_read = _Header.FrameCount;
+        for (var channel = 0; channel < channels_count; channel++)
+        {
+            var buffer = Buffers[channel];
+            if (buffer is null)
+                throw new ArgumentNullException(nameof(Buffers), $"Буфер канала {channel} не задан");
+
+            if (Offset > buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(Offset), Offset, "Смещение должно быть в диапазоне каждого буфера");
+
+            frames_to_read = Math.Min(frames_to_read, buffer.Length - Offset);
+        }
+
+        if (frames_to_read <= 0)
+            return 0;
+
+        using var data_stream = GetDataStream();
+
+        var sample_length = _Header.BlockAlign;
+        var sample_data = new byte[sample_length];
+        var bytes_per_sample = _Header.BytesPerSample;
+
+        for (var i = 0; i < frames_to_read; i++)
+        {
+            Cancel.ThrowIfCancellationRequested();
+            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
+                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
+
+            for (var channel = 0; channel < channels_count; channel++)
+                Buffers[channel][Offset + i] = ReadChannelValue(sample_data, channel, bytes_per_sample);
+
+            Progress?.Report((double)i / frames_to_read);
+        }
+
+        return frames_to_read;
+    }
+
     /// <summary>Прочитать все значения отсчётов канала</summary>
     /// <param name="Channel">Номер канала</param>
     /// <returns>Массив отсчётов канала</returns>
     public long[] GetChannel(int Channel)
     {
         Channel = ValidateChannelIndex(Channel);
-        using var data_stream = GetDataStream();
-
-        var sample_length = _Header.BlockAlign;
-        var sample_data   = new byte[sample_length];
 
         var data_length = _Header.FrameCount;
-        var result      = new long[data_length];
-
-        var bytes_per_sample = _Header.BytesPerSample;
-        for (var i = 0; i < data_length; i++)
-        {
-            if (data_stream.FillBuffer(sample_data) != sample_length)
-                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
-            result[i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
-        }
+        var result = new long[data_length];
+        _ = ReadChannel(Channel, result);
         return result;
     }
 
@@ -247,23 +420,10 @@ public abstract class Wav
     {
         Cancel.ThrowIfCancellationRequested();
         Channel = ValidateChannelIndex(Channel);
-        using var data_stream = GetDataStream();
-
-        var sample_length = _Header.BlockAlign;
-        var sample_data   = new byte[sample_length];
 
         var data_length = _Header.FrameCount;
-        var result      = new long[data_length];
-
-        var bytes_per_sample = _Header.BytesPerSample;
-        for (var i = 0; i < data_length; i++)
-        {
-            Cancel.ThrowIfCancellationRequested();
-            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
-                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
-            result[i] = ReadChannelValue(sample_data, Channel, bytes_per_sample);
-            Progress?.Report((double)i / data_length);
-        }
+        var result = new long[data_length];
+        _ = await ReadChannelAsync(Channel, result, Progress: Progress, Cancel: Cancel).ConfigureAwait(false);
         return result;
     }
 
@@ -272,25 +432,14 @@ public abstract class Wav
     /// <exception cref="InvalidOperationException">Если при чтении очередного значения будет число прочитанных байт не будет равно размеру одного кадра</exception>
     public long[][] GetChannels()
     {
-        using var data_stream    = GetDataStream();
-        var       channels_count = _Header.ChannelsCount;
-
-        var sample_length = _Header.BlockAlign;
-        var sample_data   = new byte[sample_length];
-
+        var channels_count = _Header.ChannelsCount;
         var data_length = _Header.FrameCount;
-        var result      = new long[channels_count][];
+
+        var result = new long[channels_count][];
         for (var channel = 0; channel < channels_count; channel++)
             result[channel] = new long[data_length];
 
-        var bytes_per_sample = _Header.BytesPerSample;
-        for (var i = 0; i < data_length; i++)
-        {
-            if (data_stream.FillBuffer(sample_data) != sample_length)
-                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
-            for (var channel = 0; channel < channels_count; channel++)
-                result[channel][i] = ReadChannelValue(sample_data, channel, bytes_per_sample);
-        }
+        _ = ReadChannels(result);
         return result;
     }
 
@@ -299,30 +448,18 @@ public abstract class Wav
     /// <param name="Cancel">Признак отмены асинхронной операции</param>
     /// <returns>Задача, возвращающая массив массивов значений всех каналов</returns>
     /// <exception cref="InvalidOperationException">Если при чтении очередного значения будет число прочитанных байт не будет равно размеру одного кадра</exception>
-    public async Task<long[][]> GetChannelsAsync(IProgress<double> Progress, CancellationToken Cancel = default)
+    public async Task<long[][]> GetChannelsAsync(IProgress<double> Progress = null, CancellationToken Cancel = default)
     {
         Cancel.ThrowIfCancellationRequested();
-        using var data_stream    = GetDataStream();
-        var       channels_count = _Header.ChannelsCount;
 
-        var sample_length = _Header.BlockAlign;
-        var sample_data   = new byte[sample_length];
-
+        var channels_count = _Header.ChannelsCount;
         var data_length = _Header.FrameCount;
-        var result      = new long[channels_count][];
+
+        var result = new long[channels_count][];
         for (var channel = 0; channel < channels_count; channel++)
             result[channel] = new long[data_length];
 
-        var bytes_per_sample = _Header.BytesPerSample;
-        for (var i = 0; i < data_length; i++)
-        {
-            Cancel.ThrowIfCancellationRequested();
-            if (await data_stream.FillBufferAsync(sample_data, Cancel).ConfigureAwait(false) != sample_length)
-                throw new InvalidOperationException($"Ошибка чтения файла при загрузке данных {i} фрейма");
-            for (var channel = 0; channel < channels_count; channel++)
-                result[channel][i] = ReadChannelValue(sample_data, channel, bytes_per_sample);
-            Progress?.Report((double)i / data_length);
-        }
+        _ = await ReadChannelsAsync(result, Progress: Progress, Cancel: Cancel).ConfigureAwait(false);
         return result;
     }
 

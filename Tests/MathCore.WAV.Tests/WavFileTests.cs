@@ -111,4 +111,44 @@ public class WavFileTests
 
         CollectionAssert.AreEqual(new long[] { 11, 22, 33 }, channel);
     }
+
+    [TestMethod]
+    public void ReadChannel_WritesToProvidedBuffer_WithOffset()
+    {
+        var file_name = GetTempFilePath();
+        using (var writer = new WavFileWriter(file_name, BitsPerSample: 16))
+        {
+            writer.Write(10L);
+            writer.Write(20L);
+            writer.Write(30L);
+        }
+
+        var wav = new WavFile(file_name);
+        var buffer = new long[5];
+
+        var read_count = wav.ReadChannel(0, buffer, 1);
+
+        Assert.AreEqual(3, read_count);
+        CollectionAssert.AreEqual(new long[] { 0, 10, 20, 30, 0 }, buffer);
+    }
+
+    [TestMethod]
+    public async Task ReadChannelsAsync_WritesToProvidedBuffers()
+    {
+        var file_name = GetTempFilePath();
+        using (var writer = new WavFileWriter(file_name, ChannelsCount: 2, BitsPerSample: 16))
+        {
+            writer.Write(1L, 2L);
+            writer.Write(3L, 4L);
+        }
+
+        var wav = new WavFile(file_name);
+        var buffers = new[] { new long[2], new long[2] };
+
+        var read_count = await wav.ReadChannelsAsync(buffers);
+
+        Assert.AreEqual(2, read_count);
+        CollectionAssert.AreEqual(new long[] { 1, 3 }, buffers[0]);
+        CollectionAssert.AreEqual(new long[] { 2, 4 }, buffers[1]);
+    }
 }
