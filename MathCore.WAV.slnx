@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/MathCore.WAV.ConsoleTests/MathCore.WAV.ConsoleTests.csproj" />
+    <Project Path="Tests/MathCore.WAV.Tests/MathCore.WAV.Tests.csproj" />
+  </Folder>
+  <Project Path="MathCore.WAV/MathCore.WAV.csproj" />
+</Solution>
