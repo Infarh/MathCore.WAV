@@ -22,7 +22,7 @@ public abstract class Wav
 
     /* ------------------------------------------------------------------------------------- */
 
-    /// <summary>Полная длина файла в байтах включая заголовок</summary>
+    /// <summary>Полная длина данных в байтах (без заголовка)</summary>
     public long DataLength => _Header.SubChunk2Size;
 
     /// <summary>Частота дискретизации</summary>
@@ -51,32 +51,31 @@ public abstract class Wav
     /// <summary>Количество каналов</summary>
     public int ChannelsCount => _Header.ChannelsCount;
 
-    /// <summary>Байт на один отсчёт</summary>
-    public int SampleLength => _Header.BytesPerSample;
-
+    private double _valuesOffset;
     /// <summary>Смещение центра интервала физической величины</summary>
     public double ValuesOffset
     {
-        get;
+        get => _valuesOffset;
         set
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Некорректное значение смещения");
-            field = value;
+            _valuesOffset = value;
         }
     }
 
+    private double _amplitude = double.NaN;
     /// <summary>Амплитуда физической величины</summary>
     public double Amplitude
     {
-        get;
+        get => _amplitude;
         set
         {
             if (value <= double.Epsilon)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Требуется положительное значение");
-            field = value;
+            _amplitude = value;
         }
-    } = double.NaN;
+    }
 
     /// <summary>Амплитуда канала</summary>
     public long ChannelAmplitude => (1 << (_Header.BitsPerSample - 1)) - 1;

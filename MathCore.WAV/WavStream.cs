@@ -30,7 +30,7 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
 
             var sample_length = _Header.BlockAlign;
             var data_offset   = Header.Length + i * sample_length;
-            if (i < 0 || data_offset >= _DataStream.Length - sample_length)
+            if (i < 0 || data_offset + sample_length > _DataStream.Length)
                 throw new EndOfStreamException("Попытка чтения данных за пределами потока");
 
             var sample_data = new byte[sample_length];
@@ -46,7 +46,7 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
     /* ------------------------------------------------------------------------------------- */
 
     /// <summary>
-    /// Если поток является файловым, то файл открывается вновь.<br/
+    /// Если поток является файловым, то файл открывается вновь.<br/>
     /// Если в потоке можно выполнять перемещение, то положение в потоке изменяется на 44 байт (конец заголовка).
     /// Иначе возвращается <see cref="_DataStream"/>
     /// </summary>
@@ -54,7 +54,7 @@ public class WavStream(Stream DataStream, bool LeaveOpen = false) : Wav(Header.L
     public override Stream GetDataStream()
     {
         if (_DataStream is FileStream file)
-            return new FileStream(file.Name, FileMode.Open);
+            return new FileStream(file.Name, FileMode.Open, FileAccess.Read, FileShare.Read);
 
         if (_DataStream.CanSeek)
             _DataStream.Seek(Header.Length, SeekOrigin.Begin);
