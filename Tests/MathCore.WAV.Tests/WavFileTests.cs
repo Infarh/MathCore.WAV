@@ -99,4 +99,16 @@ public class WavFileTests
 
         Assert.IsFalse(result);
     }
+
+    [TestMethod]
+    public void WavFileStatic_Write_IntArray_CreatesReadableFile()
+    {
+        var file_name = GetTempFilePath();
+        _ = WavFile.Write(file_name, new[] { 11, 22, 33 }, BitsPerSample: 16);
+
+        var wav = new WavFile(file_name);
+        var channel = wav.GetChannel(0);
+
+        CollectionAssert.AreEqual(new long[] { 11, 22, 33 }, channel);
+    }
 }
